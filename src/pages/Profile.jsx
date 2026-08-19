@@ -6,6 +6,7 @@ import Chip from "../components/ui/Chip.jsx";
 import SelectCard from "../components/ui/SelectCard.jsx";
 import { useProfile } from "../context/ProfileContext.jsx";
 import { CAREER_STAGES, INTERESTS, GOALS, SKILL_SUGGESTIONS, PRIORITIES } from "../data/onboardingOptions.js";
+import { HELP_TYPES } from "../data/networkOptions.js";
 
 export default function Profile() {
   const { profile, setProfile } = useProfile();
@@ -60,6 +61,12 @@ export default function Profile() {
         <div>
           <div className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--accent-strong)" }}>Priorities</div>
           <div className="mt-2 flex flex-wrap gap-2">{PRIORITIES.map((o) => <Chip key={o} selected={profile.priorities.includes(o)} onClick={() => toggleIn("priorities", o)}>{o}</Chip>)}</div>
+        </div>
+
+        <div>
+          <div className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--accent-strong)" }}>What I can help with</div>
+          <p className="mt-1 text-[12.5px]" style={{ color: "var(--text-secondary)" }}>Optional — lets NEXA eventually suggest you to women exploring what you've already been through.</p>
+          <div className="mt-2 flex flex-wrap gap-2">{HELP_TYPES.map((o) => <Chip key={o} selected={profile.helpTopics.includes(o)} onClick={() => toggleIn("helpTopics", o)}>{o}</Chip>)}</div>
         </div>
       </div>
 

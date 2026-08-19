@@ -6,11 +6,14 @@ import OpportunityCard from "../components/discover/OpportunityCard.jsx";
 import OpportunitySearch from "../components/discover/OpportunitySearch.jsx";
 import SortControl from "../components/discover/SortControl.jsx";
 import OpportunityFilters, { emptyFilters, activeFilterCount } from "../components/discover/OpportunityFilters.jsx";
+import SomeoneWhosBeenThere from "../components/network/SomeoneWhosBeenThere.jsx";
 import Button from "../components/ui/Button.jsx";
 import { Reveal } from "../lib/hooks.jsx";
 import { useProfile } from "../context/ProfileContext.jsx";
 import { OPPORTUNITIES } from "../data/opportunities.js";
+import { WOMEN } from "../data/women.js";
 import { calculateMatchScore } from "../lib/matching.js";
+import { calculateWomanMatchScore } from "../lib/womanMatching.js";
 import { deadlineBucket, daysLeft } from "../lib/deadline.js";
 
 function matchesFilters(opp, filters) {
@@ -65,13 +68,32 @@ export default function Discover() {
   const featured = sorted[0];
   const rest = sorted.slice(1);
 
+  // Pick the woman most relevant to the featured opportunity's focus areas
+  // (falls back to the user's best overall match).
+  const relevantWoman = useMemo(() => {
+    if (!featured) return null;
+    const scored = WOMEN.map((w) => ({
+      woman: w,
+      relevance: w.experience.filter((e) => featured.opportunity.categories.includes(e)).length,
+      match: calculateWomanMatchScore(profile, w),
+    }));
+    scored.sort((a, b) => b.relevance - a.relevance || b.match - a.match);
+    return scored[0]?.woman || null;
+  }, [featured, profile]);
+
   return (
     <div className="mx-auto max-w-5xl px-6 py-14 md:px-10">
       <Reveal><DiscoverHeader profile={profile} /></Reveal>
 
       {featured && (
-        <Reveal delay={80} className="mb-12">
+        <Reveal delay={80} className="mb-6">
           <FeaturedOpportunity opportunity={featured.opportunity} match={featured.match} profile={profile} />
+        </Reveal>
+      )}
+
+      {relevantWoman && (
+        <Reveal delay={110} className="mb-12">
+          <SomeoneWhosBeenThere woman={relevantWoman} />
         </Reveal>
       )}
 

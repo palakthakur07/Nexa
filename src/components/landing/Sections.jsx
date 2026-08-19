@@ -33,7 +33,7 @@ export function ProblemSection() {
 
 const pillars = [
   { key: "discover", label: "Discover", icon: Compass, copy: "Opportunities matched to you — scholarships, fellowships, grants and roles worth your time.", route: "/discover" },
-  { key: "connect", label: "Connect", icon: Users, copy: "Women who've already walked the path you're considering, ready to talk it through.", route: "/people" },
+  { key: "connect", label: "Connect", icon: Users, copy: "Women who've already walked the path you're considering, ready to talk it through.", route: "/network" },
   { key: "plan", label: "Plan", icon: MapPin, copy: "A roadmap built around your goal, broken into steps that actually make sense.", route: "/roadmap" },
   { key: "move", label: "Move", icon: ArrowRight, copy: "A clear next action — never a vague list of things you should probably do.", route: "/discover" },
 ];

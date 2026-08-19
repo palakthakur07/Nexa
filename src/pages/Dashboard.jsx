@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Check, Sparkles, ArrowUpRight } from "lucide-react";
 import Button from "../components/ui/Button.jsx";
 import Badge from "../components/ui/Badge.jsx";
-import Avatar from "../components/ui/Avatar.jsx";
+import WomanCard from "../components/network/WomanCard.jsx";
 import OpportunityCard from "../components/discover/OpportunityCard.jsx";
 import DashboardSection from "../components/dashboard/DashboardSection.jsx";
 import { Reveal } from "../lib/hooks.jsx";
@@ -13,6 +13,7 @@ import { OPPORTUNITIES } from "../data/opportunities.js";
 import { WOMEN } from "../data/women.js";
 import { COMMUNITIES } from "../data/communities.js";
 import { calculateMatchScore } from "../lib/matching.js";
+import { calculateWomanMatchScore } from "../lib/womanMatching.js";
 import { getNextMove, generateRoadmap } from "../lib/scoring.js";
 
 export default function Dashboard() {
@@ -25,6 +26,11 @@ export default function Dashboard() {
   // out of sync with each other.
   const topOpportunities = useMemo(
     () => OPPORTUNITIES.map((o) => ({ opportunity: o, match: calculateMatchScore(profile, o) })).sort((a, b) => b.match - a.match).slice(0, 3),
+    [profile]
+  );
+  // Same principle for the women network (lib/womanMatching.js, Phase 4).
+  const topWomen = useMemo(
+    () => WOMEN.map((w) => ({ woman: w, match: calculateWomanMatchScore(profile, w) })).sort((a, b) => b.match - a.match).slice(0, 3),
     [profile]
   );
   const nextMove = useMemo(() => getNextMove(profile), [profile]);
@@ -56,16 +62,9 @@ export default function Dashboard() {
         </div>
       </DashboardSection>
 
-      <DashboardSection eyebrow="Community" title="Women who've been there">
+      <DashboardSection eyebrow="Community" title="Women who've been there" action={<button onClick={() => navigate("/network")} className="t-fast text-[13px] font-semibold" style={{ color: "var(--accent-strong)" }}>Meet more women</button>}>
         <div className="grid gap-4 sm:grid-cols-3">
-          {WOMEN.map((w) => (
-            <div key={w.id} className="nexa-card rounded-[var(--radius-lg)] p-5">
-              <Avatar initials={w.name[0]} size={38} />
-              <div className="mt-2.5 text-[14px] font-semibold">{w.name}</div>
-              <div className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{w.role} · {w.area}</div>
-              <p className="mt-2 text-[12.5px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>{w.why}</p>
-            </div>
-          ))}
+          {topWomen.map(({ woman, match }) => <WomanCard key={woman.id} woman={woman} match={match} />)}
         </div>
         <div className="mt-2 text-[11px]" style={{ color: "var(--text-tertiary)" }}>Demo profiles — not real users.</div>
       </DashboardSection>

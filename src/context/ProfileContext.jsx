@@ -12,6 +12,11 @@ export function emptyProfile() {
     skills: [],
     priorities: [],
     onboardingComplete: false,
+    // Phase 4 — what this user can help others with, and an optional
+    // "give back" submission. Both start empty/null and are purely additive
+    // to the Phase 2 profile shape, so existing code paths are unaffected.
+    helpTopics: [],
+    giveBack: null,
   };
 }
 
@@ -24,6 +29,8 @@ export const DEMO_PROFILE = {
   skills: ["Python", "AI/ML", "Research"],
   priorities: ["Funding", "Mentorship"],
   onboardingComplete: true,
+  helpTopics: [],
+  giveBack: null,
 };
 
 function loadStoredProfile() {

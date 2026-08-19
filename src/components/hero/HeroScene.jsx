@@ -17,7 +17,7 @@ export default function HeroScene({ characterSrc }) {
 
   const screens = buildScreens({
     onNavigateDiscover: () => navigate("/discover"),
-    onNavigatePeople: () => navigate("/people"),
+    onNavigatePeople: () => navigate("/network"),
     onNavigateRoadmap: () => navigate("/roadmap"),
     onOpenNexa: openDrawer,
   });

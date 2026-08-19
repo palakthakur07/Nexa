@@ -1,12 +1,14 @@
 # NEXA
 
-## Phase 3 — Discover: personalized opportunity discovery + matching
+## Phase 4 — Women network: "women who've been there"
 
-Landing → onboarding → analysis → personalized dashboard → profile, plus
-now a full opportunity discovery experience: search, filter, sort, a
-deterministic match-scoring engine, opportunity detail pages, and a saved
-list with application-status tracking. Everything from Phase 1 (hero 3D
-scene) and Phase 2 (onboarding/dashboard/profile) is unchanged.
+Landing → onboarding → dashboard → discover (Phase 3) → **network** (Phase 4):
+structured matching to women with relevant experience, profile pages with a
+journey timeline, a guided "ask for help" request flow, connections, and a
+lightweight received/sent request inbox. Phases 1–3 are unchanged except for
+two integration points (Dashboard's women section, Discover's new "someone
+who's been there" card) and swapping the old `/people` placeholder for the
+real `/network`.
 
 ## Run it
 
@@ -15,106 +17,73 @@ npm install
 npm run dev
 ```
 
-`npm run build` produces a static production build in `dist/`.
-
-## Project structure
+## Project structure (additions since Phase 3)
 
 ```
-index.html
 src/
-  main.jsx                  — entry point (BrowserRouter, token styles)
-  App.jsx                   — route table + global providers
-  styles/tokens.css         — design tokens (colors, type, radius, motion)
-  index.css                 — Tailwind directives
-
   context/
-    ProfileContext.jsx      — profile state + localStorage persistence
-    NexaDrawerContext.jsx   — Nexa preview drawer open/close state
-    SavedContext.jsx        — saved opportunities + application status, localStorage-backed
+    ConnectionsContext.jsx     — sent/received requests + connections, localStorage-backed
 
-  data/                     — mock data layer (swap for real API/DB later)
-    opportunities.js        — 18 opportunities, full schema (Phase 3)
-    women.js
-    communities.js
-    roadmap.js
-    onboardingOptions.js    — option lists shared by onboarding + profile + filters
+  data/
+    women.js                   — 15 full demo profiles (Phase 4 schema)
+    networkOptions.js          — experience/journey/help-type/language vocab, goal→journey-tag map
 
   lib/
-    matching.js             — calculateMatchScore / getMatchBreakdown / getMatchReasons (Phase 3)
-    deadline.js              — daysLeft / deadlineStatus / deadlineBucket / formatDeadline (Phase 3)
-    scoring.js                — getNextMove / generateRoadmap (roadmap-only, post Phase 3)
-    hooks.jsx                  — useReveal, Reveal, useCameraParallax
+    womanMatching.js           — calculateWomanMatchScore / getWomanMatchReasons (separate from lib/matching.js)
 
   components/
-    ui/                     — Button, Badge, Avatar, Chip, SelectCard, MatchRing
-    Character.jsx           — central character asset slot
-    NavBar.jsx, Footer.jsx, NexaDrawer.jsx
-    hero/                   — HeroScene, FloatingScreen, mini-screen contents
-    landing/Sections.jsx    — Problem / Pillars / Nexa intelligence / Final CTA
-    onboarding/             — OnboardingLayout, ProgressDots, Steps
-    dashboard/              — DashboardSection, EmptyState
-    discover/                — MatchScore, MatchBreakdown, DeadlineBadge, SaveButton,
-                                OpportunityCard, FeaturedOpportunity, OpportunitySearch,
-                                SortControl, OpportunityFilters, DiscoverHeader,
-                                EligibilitySection, ApplicationSteps
+    network/
+      WomanCard.jsx, WomanMatchScore.jsx, MatchExplanation.jsx, VerifiedBadge.jsx
+      ConnectionStatus.jsx, JourneyTimeline.jsx, HelpRequestModal.jsx
+      NetworkFilters.jsx, NetworkSearch.jsx, NetworkHero.jsx
+      CommunitySuggestion.jsx, GiveBackCard.jsx, SomeoneWhosBeenThere.jsx
 
   pages/
-    Landing.jsx              — /
-    Onboarding.jsx            — /onboarding
-    Analysis.jsx                — /analysis
-    Dashboard.jsx                — /dashboard
-    Profile.jsx                   — /profile
-    Discover.jsx                   — /discover (Phase 3)
-    OpportunityDetail.jsx           — /discover/:id (Phase 3)
-    Saved.jsx                        — /saved (Phase 3)
-    PlaceholderRoute.jsx              — /people, /roadmap
+    Network.jsx                — /network
+    WomanDetail.jsx             — /network/:id
+    Connections.jsx              — /network/connections
 ```
 
 ## Routes
 
 | Path | Page |
 |---|---|
-| `/` | Landing (hero 3D scene + story) |
-| `/onboarding` | 7-step guided onboarding |
-| `/analysis` | Simulated "NEXA is connecting the dots" transition |
-| `/dashboard` | Personalized dashboard |
-| `/profile` | Edit the profile NEXA uses |
-| `/discover` | Opportunity discovery — search, filter, sort, featured match |
-| `/discover/:id` | Opportunity detail — match breakdown, eligibility, how to apply |
-| `/saved` | Saved opportunities + application status tracker |
-| `/people`, `/roadmap` | Lightweight placeholders |
+| `/network` | Personalized hero + browsable, filterable, searchable women network |
+| `/network/:id` | Woman profile — journey timeline, why she's recommended, ask for help |
+| `/network/connections` | Connections + sent/received requests (accept/decline) |
+| `/roadmap` | Remaining lightweight placeholder |
+
+`/people` no longer exists — it's `/network` now (hero panels, pillar
+"Connect", footer link, and nav all point there).
+
+## The woman-matching engine
+
+`src/lib/womanMatching.js` — deliberately separate from the opportunity
+matching engine (`lib/matching.js`). Weights: goal alignment 25% · journey
+alignment 25% · interest/skill alignment 20% · career-stage relevance 10% ·
+location/language 10% · help-topic alignment 10%. `getWomanMatchReasons`
+never states more than the profile/woman data actually supports.
 
 ## State & persistence
 
-- `ProfileContext` — one profile object, `localStorage`-backed, wrapped in try/catch.
-- `SavedContext` — `{ [opportunityId]: { status, savedAt } }`, also `localStorage`-backed.
-Refreshing mid-onboarding or after saving opportunities keeps your state.
+- `ConnectionsContext` — `{ sent[], received[], connections[] }`,
+  `localStorage`-backed. Seeded once (first load only) with two demo
+  "received" requests and one existing connection, since there's no backend
+  to generate real incoming requests for a demo.
+- `ProfileContext` gained two additive fields: `helpTopics` (what the user
+  can help others with, edited on `/profile`) and `giveBack` (the "share
+  your experience" form result). Both default to empty/`null` and don't
+  touch any Phase 1–3 profile field.
 
-## The matching engine
+## What's demo/mock
 
-`src/lib/matching.js` — `calculateMatchScore(profile, opportunity)` is a
-deterministic weighted formula (career stage 20% · goals 25% · interests
-20% · skills 15% · priorities 10% · location 5% · baseline 5%), plus
-`getMatchBreakdown` (4-bar explanation) and `getMatchReasons` (up to 4
-plain-language reasons). Dashboard and Discover both import from this one
-file, so they never disagree with each other.
-
-## Swapping in the real character asset
-
-```jsx
-<HeroScene characterSrc="/images/nexa-character.png" />
-```
-
-in `pages/Landing.jsx`. Use a transparent PNG/WebP around 300×480.
-
-## What's mock data
-
-Everything under `src/data/` plus the scoring functions in `src/lib/`.
-Nothing is a real AI call or real API — see each file's header comment.
+All 15 profiles in `data/women.js` are fictional. Every verification badge
+reads "Demo verified" — never implying real-world identity verification.
+Requests sent from the UI are stored locally only; nothing is transmitted
+anywhere.
 
 ## Known limitations
 
-- No backend, no real authentication, no real AI.
-- Match scores and eligibility status are deterministic heuristics, by design for this phase.
-- "Add to roadmap" on the opportunity detail page is a local UI confirmation only — not wired into the roadmap's generated state, to avoid restructuring Phase 2.
+- No real messaging — accepting a connection reveals conversation starters, not a working composer.
+- Sent requests stay "Pending" indefinitely (no simulated auto-acceptance) since faking a real person's response would be misleading.
 - Not yet QA'd across breakpoints in a live browser.
