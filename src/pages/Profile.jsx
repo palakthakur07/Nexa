@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Sparkles } from "lucide-react";
 import Button from "../components/ui/Button.jsx";
 import Chip from "../components/ui/Chip.jsx";
 import SelectCard from "../components/ui/SelectCard.jsx";
@@ -70,9 +70,10 @@ export default function Profile() {
         </div>
       </div>
 
-      <div className="mt-10 flex items-center gap-3">
+      <div className="mt-10 flex flex-wrap items-center gap-3">
         <Button variant="primary" onClick={save}>Save changes</Button>
         {saved && <span className="text-[13px] font-medium" style={{ color: "var(--success)" }}>Profile updated.</span>}
+        <Button variant="ghost" icon={Sparkles} onClick={() => navigate("/nexa", { state: { entryContext: { type: "profile" } } })}>Ask NEXA about my next step</Button>
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, ExternalLink, Check } from "lucide-react";
+import { ArrowLeft, ExternalLink, Check, Sparkles } from "lucide-react";
 import Button from "../components/ui/Button.jsx";
 import Badge from "../components/ui/Badge.jsx";
 import MatchScore from "../components/discover/MatchScore.jsx";
@@ -27,7 +27,7 @@ function nexaTake(profile, opportunity, match) {
 export default function OpportunityDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { profile } = useProfile();
+  const { profile, addRoadmapItem } = useProfile();
   const [addedToRoadmap, setAddedToRoadmap] = useState(false);
 
   const opportunity = OPPORTUNITIES.find((o) => o.id === id);
@@ -74,6 +74,7 @@ export default function OpportunityDetail() {
                 <Button variant="primary" icon={ExternalLink} iconRight>Apply / Visit opportunity</Button>
               </a>
               <SaveButton id={opportunity.id} />
+              <Button variant="ghost" icon={Sparkles} onClick={() => navigate("/nexa", { state: { entryContext: { type: "opportunity", id: opportunity.id } } })}>Ask NEXA about this</Button>
             </div>
           </div>
           <MatchScore value={match} size={80} />
@@ -145,7 +146,11 @@ export default function OpportunityDetail() {
             {reasons[0] ? `${reasons[0]}${status.days >= 0 && status.days <= 14 ? ", and the deadline is approaching." : "."}` : "Based on what you've told NEXA so far."}
           </p>
           <div className="mt-4">
-            <Button variant={addedToRoadmap ? "secondary" : "primary"} icon={addedToRoadmap ? Check : undefined} onClick={() => setAddedToRoadmap(true)} disabled={addedToRoadmap}>
+            <Button
+              variant={addedToRoadmap ? "secondary" : "primary"} icon={addedToRoadmap ? Check : undefined}
+              onClick={() => { addRoadmapItem(`Apply to ${opportunity.title}`); setAddedToRoadmap(true); }}
+              disabled={addedToRoadmap}
+            >
               {addedToRoadmap ? "Added to roadmap" : "Add to roadmap"}
             </Button>
           </div>

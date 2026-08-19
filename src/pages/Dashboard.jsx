@@ -8,7 +8,6 @@ import OpportunityCard from "../components/discover/OpportunityCard.jsx";
 import DashboardSection from "../components/dashboard/DashboardSection.jsx";
 import { Reveal } from "../lib/hooks.jsx";
 import { useProfile } from "../context/ProfileContext.jsx";
-import { useNexaDrawer } from "../context/NexaDrawerContext.jsx";
 import { OPPORTUNITIES } from "../data/opportunities.js";
 import { WOMEN } from "../data/women.js";
 import { COMMUNITIES } from "../data/communities.js";
@@ -18,7 +17,6 @@ import { getNextMove, generateRoadmap } from "../lib/scoring.js";
 
 export default function Dashboard() {
   const { profile } = useProfile();
-  const { openDrawer } = useNexaDrawer();
   const navigate = useNavigate();
 
   // Same data + same matching engine as /discover (lib/matching.js), so
@@ -89,7 +87,7 @@ export default function Dashboard() {
           <div className="nexa-panel mt-3 rounded-[var(--radius-lg)] p-5">
             <div className="flex items-center gap-2"><span className="anim-glow inline-block h-2 w-2 rounded-full" style={{ background: "var(--accent-strong)" }} /><span className="text-[11px] font-semibold" style={{ color: "var(--text-tertiary)" }}>Active</span></div>
             <p className="font-display mt-2 text-[15.5px]">I found {strongMatches || topOpportunities.length} opportunities that fit what you're looking for.</p>
-            <Button variant="secondary" size="sm" icon={Sparkles} onClick={openDrawer}>Ask Nexa</Button>
+            <Button variant="secondary" size="sm" icon={Sparkles} onClick={() => navigate("/nexa")}>Ask Nexa</Button>
           </div>
         </Reveal>
         <Reveal delay={80}>

@@ -4,7 +4,7 @@ import Button from "../ui/Button.jsx";
 import Badge from "../ui/Badge.jsx";
 import Character from "../Character.jsx";
 import FloatingScreen from "./FloatingScreen.jsx";
-import { buildScreens } from "./screens.config.js";
+import { buildScreens } from "./screens.config.jsx";
 import { Reveal, useCameraParallax } from "../../lib/hooks.jsx";
 import { useNexaDrawer } from "../../context/NexaDrawerContext.jsx";
 

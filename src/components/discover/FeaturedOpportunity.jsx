@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Check } from "lucide-react";
+import { Check, Sparkles } from "lucide-react";
 import Button from "../ui/Button.jsx";
 import Badge from "../ui/Badge.jsx";
 import MatchScore from "./MatchScore.jsx";
@@ -42,6 +42,7 @@ export default function FeaturedOpportunity({ opportunity, match, profile }) {
           <div className="mt-6 flex flex-wrap items-center gap-3">
             <Button variant="primary" onClick={() => navigate(`/discover/${opportunity.id}`)}>View opportunity</Button>
             <SaveButton id={opportunity.id} />
+            <Button variant="ghost" icon={Sparkles} onClick={() => navigate("/nexa", { state: { entryContext: { type: "opportunity", id: opportunity.id } } })}>Ask NEXA about this</Button>
           </div>
         </div>
 

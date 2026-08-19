@@ -31,6 +31,7 @@
 #nexa-app .nexa-btn-secondary:hover:not(:disabled) { background: var(--surface-muted); border-color: var(--accent-strong); }
 #nexa-app .nexa-btn-ghost { background: transparent; color: var(--text-primary); }
 #nexa-app .nexa-btn-ghost:hover:not(:disabled) { background: var(--surface-muted); }
+#nexa-app .nexa-icon-btn:hover:not(:disabled) { background: var(--surface-muted); }
 #nexa-app .nexa-card { background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow-sm); }
 #nexa-app .nexa-panel { background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow-md); }
 #nexa-app .nexa-ai-input { background: var(--surface); border: 1px solid var(--border-strong); box-shadow: var(--shadow-sm); }

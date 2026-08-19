@@ -28,8 +28,16 @@ export function generateRoadmap(profile) {
     profile.priorities.length > 0,
   ].filter(Boolean).length;
 
-  return ROADMAP_TEMPLATE.map((label, i) => ({
+  const baseSteps = ROADMAP_TEMPLATE.map((label, i) => ({
     label,
     status: i < filledCount ? "done" : i === filledCount ? "now" : "later",
   }));
+
+  // Phase 5 — items NEXA or the user added via an "Add to roadmap" action.
+  // Appended after the auto-generated steps, always "later" until the base
+  // steps are complete, matching how a newly added task would realistically
+  // queue behind what's already in motion.
+  const customSteps = (profile.customRoadmapItems || []).map((label) => ({ label, status: "later", custom: true }));
+
+  return [...baseSteps, ...customSteps];
 }

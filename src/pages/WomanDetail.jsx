@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, MessageCircleQuestion } from "lucide-react";
+import { ArrowLeft, MessageCircleQuestion, Sparkles } from "lucide-react";
 import Button from "../components/ui/Button.jsx";
 import Badge from "../components/ui/Badge.jsx";
 import Avatar from "../components/ui/Avatar.jsx";
@@ -64,10 +64,11 @@ export default function WomanDetail() {
           </div>
           <WomanMatchScore value={match} size={80} />
         </div>
-        <div className="mt-5">
+        <div className="mt-5 flex flex-wrap items-center gap-3">
           <Button variant="primary" icon={MessageCircleQuestion} onClick={() => setModalOpen(true)} disabled={status !== "none"}>
             {status === "none" ? "Ask for help" : status === "pending" ? "Request pending" : "Already connected"}
           </Button>
+          <Button variant="ghost" icon={Sparkles} onClick={() => navigate("/nexa", { state: { entryContext: { type: "woman", id: woman.id } } })}>Ask NEXA who I should talk to</Button>
         </div>
       </Reveal>
 

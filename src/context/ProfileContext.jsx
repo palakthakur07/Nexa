@@ -17,6 +17,9 @@ export function emptyProfile() {
     // to the Phase 2 profile shape, so existing code paths are unaffected.
     helpTopics: [],
     giveBack: null,
+    // Phase 5 — items NEXA (or the user) added to the roadmap beyond the
+    // auto-generated steps. Additive to lib/scoring.js's generateRoadmap().
+    customRoadmapItems: [],
   };
 }
 
@@ -31,6 +34,7 @@ export const DEMO_PROFILE = {
   onboardingComplete: true,
   helpTopics: [],
   giveBack: null,
+  customRoadmapItems: [],
 };
 
 function loadStoredProfile() {
@@ -61,8 +65,11 @@ export function ProfileProvider({ children }) {
 
   const loadDemo = useCallback(() => setProfile(DEMO_PROFILE), []);
   const resetProfile = useCallback(() => setProfile(emptyProfile()), []);
+  const addRoadmapItem = useCallback((label) => {
+    setProfile((p) => (p.customRoadmapItems.includes(label) ? p : { ...p, customRoadmapItems: [...p.customRoadmapItems, label] }));
+  }, []);
 
-  const value = useMemo(() => ({ profile, setProfile, loadDemo, resetProfile }), [profile, loadDemo, resetProfile]);
+  const value = useMemo(() => ({ profile, setProfile, loadDemo, resetProfile, addRoadmapItem }), [profile, loadDemo, resetProfile, addRoadmapItem]);
   return <ProfileContext.Provider value={value}>{children}</ProfileContext.Provider>;
 }
 

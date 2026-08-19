@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { Sparkles } from "lucide-react";
 import Button from "./ui/Button.jsx";
 import Avatar from "./ui/Avatar.jsx";
 import { useProfile } from "../context/ProfileContext.jsx";
@@ -32,6 +33,11 @@ export default function NavBar() {
         {profile.onboardingComplete && <button onClick={() => navigate("/dashboard")} className="nexa-nav-link t-fast text-[13.5px] font-medium">Dashboard</button>}
       </nav>
       <div className="flex items-center gap-3">
+        {profile.onboardingComplete && (
+          <button onClick={() => navigate("/nexa")} aria-label="Ask NEXA" className="nexa-icon-btn t-fast flex h-9 w-9 items-center justify-center rounded-full" style={{ color: "var(--accent-strong)" }}>
+            <Sparkles size={17} />
+          </button>
+        )}
         {profile.onboardingComplete && (
           <button onClick={() => navigate("/profile")} className="t-fast flex items-center gap-2">
             <Avatar initials={(profile.name || "N")[0]} size={32} />

@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { SlidersHorizontal, Users } from "lucide-react";
+import { SlidersHorizontal, Users, Sparkles } from "lucide-react";
 import NetworkHero from "../components/network/NetworkHero.jsx";
 import NetworkSearch from "../components/network/NetworkSearch.jsx";
 import NetworkFilters, { emptyNetworkFilters, activeNetworkFilterCount } from "../components/network/NetworkFilters.jsx";
@@ -46,9 +46,12 @@ export default function Network() {
     <div className="mx-auto max-w-5xl px-6 py-14 md:px-10">
       <Reveal><NetworkHero profile={profile} matchCount={scored.filter((s) => s.match >= 70).length} /></Reveal>
 
-      <Reveal delay={60} className="mb-3 flex items-center justify-between">
+      <Reveal delay={60} className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <h2 className="font-display text-[1.5rem]">Strongest matches for you</h2>
-        <button onClick={() => navigate("/network/connections")} className="t-fast text-[13px] font-semibold" style={{ color: "var(--accent-strong)" }}>My connections & requests</button>
+        <div className="flex items-center gap-4">
+          <button onClick={() => navigate("/nexa", { state: { entryContext: { type: "network" } } })} className="t-fast inline-flex items-center gap-1.5 text-[13px] font-semibold" style={{ color: "var(--accent-strong)" }}><Sparkles size={13} /> Ask NEXA who I should talk to</button>
+          <button onClick={() => navigate("/network/connections")} className="t-fast text-[13px] font-semibold" style={{ color: "var(--accent-strong)" }}>My connections & requests</button>
+        </div>
       </Reveal>
       <Reveal delay={100} className="mb-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {topMatches.map(({ woman, match }) => <WomanCard key={woman.id} woman={woman} match={match} />)}
