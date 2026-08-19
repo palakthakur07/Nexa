@@ -27,6 +27,8 @@ export default function NavBar() {
       <nav className="hidden items-center gap-7 md:flex">
         <button onClick={() => navigate("/discover")} className="nexa-nav-link t-fast text-[13.5px] font-medium">Discover</button>
         <button onClick={() => navigate("/people")} className="nexa-nav-link t-fast text-[13.5px] font-medium">People</button>
+        {profile.onboardingComplete && <button onClick={() => navigate("/saved")} className="nexa-nav-link t-fast text-[13.5px] font-medium">Saved</button>}
+        {profile.onboardingComplete && <button onClick={() => navigate("/roadmap")} className="nexa-nav-link t-fast text-[13.5px] font-medium">Roadmap</button>}
         {profile.onboardingComplete && <button onClick={() => navigate("/dashboard")} className="nexa-nav-link t-fast text-[13.5px] font-medium">Dashboard</button>}
       </nav>
       <div className="flex items-center gap-3">

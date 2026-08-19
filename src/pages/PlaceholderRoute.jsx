@@ -1,9 +1,9 @@
 import { useNavigate } from "react-router-dom";
-import { Compass, Users, MapPin, ArrowLeft } from "lucide-react";
+import { Users, MapPin, ArrowLeft } from "lucide-react";
 import { useProfile } from "../context/ProfileContext.jsx";
 
+// "discover" used to live here — it's a full page now (see pages/Discover.jsx).
 const CONTENT = {
-  discover: { title: "Discover", eyebrow: "/discover", copy: "This is where NEXA will surface opportunities matched to your goals. The full Opportunity Hub arrives in a later phase.", icon: Compass },
   people: { title: "People", eyebrow: "/people", copy: "This is where you'll browse and connect with women who've already walked the path you're considering. The full People experience arrives in a later phase.", icon: Users },
   roadmap: { title: "Roadmap", eyebrow: "/roadmap", copy: "This is where your goal becomes a personalized, trackable plan — see a live version of it on your dashboard.", icon: MapPin },
 };

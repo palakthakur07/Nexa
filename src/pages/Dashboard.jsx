@@ -1,33 +1,36 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Compass, ArrowUpRight, Check, Sparkles } from "lucide-react";
+import { Check, Sparkles, ArrowUpRight } from "lucide-react";
 import Button from "../components/ui/Button.jsx";
 import Badge from "../components/ui/Badge.jsx";
 import Avatar from "../components/ui/Avatar.jsx";
-import MatchRing from "../components/ui/MatchRing.jsx";
+import OpportunityCard from "../components/discover/OpportunityCard.jsx";
 import DashboardSection from "../components/dashboard/DashboardSection.jsx";
-import EmptyState from "../components/dashboard/EmptyState.jsx";
 import { Reveal } from "../lib/hooks.jsx";
 import { useProfile } from "../context/ProfileContext.jsx";
 import { useNexaDrawer } from "../context/NexaDrawerContext.jsx";
 import { OPPORTUNITIES } from "../data/opportunities.js";
 import { WOMEN } from "../data/women.js";
 import { COMMUNITIES } from "../data/communities.js";
-import { calculateMatchScore, getNextMove, generateRoadmap } from "../lib/scoring.js";
+import { calculateMatchScore } from "../lib/matching.js";
+import { getNextMove, generateRoadmap } from "../lib/scoring.js";
 
 export default function Dashboard() {
   const { profile } = useProfile();
   const { openDrawer } = useNexaDrawer();
   const navigate = useNavigate();
 
-  const opportunities = useMemo(
-    () => OPPORTUNITIES.map((o) => ({ ...o, match: calculateMatchScore(profile, o) })).sort((a, b) => b.match - a.match).slice(0, 4),
+  // Same data + same matching engine as /discover (lib/matching.js), so
+  // the dashboard's "top picks" and the full Discover results never drift
+  // out of sync with each other.
+  const topOpportunities = useMemo(
+    () => OPPORTUNITIES.map((o) => ({ opportunity: o, match: calculateMatchScore(profile, o) })).sort((a, b) => b.match - a.match).slice(0, 3),
     [profile]
   );
   const nextMove = useMemo(() => getNextMove(profile), [profile]);
   const roadmap = useMemo(() => generateRoadmap(profile), [profile]);
   const progressPct = Math.round((roadmap.filter((r) => r.status === "done").length / roadmap.length) * 100);
-  const strongMatches = opportunities.filter((o) => o.match >= 80).length;
+  const strongMatches = topOpportunities.filter((o) => o.match >= 80).length;
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-14 md:px-10">
@@ -45,29 +48,12 @@ export default function Dashboard() {
         </div>
       </DashboardSection>
 
-      <DashboardSection eyebrow="Opportunities" title="Opportunities for you" action={<button onClick={() => navigate("/discover")} className="t-fast text-[13px] font-semibold" style={{ color: "var(--accent-strong)" }}>See all</button>}>
-        {opportunities.length === 0 ? (
-          <EmptyState icon={Compass} text="No saved opportunities yet. NEXA will keep your shortlist here." />
-        ) : (
-          <div className="grid gap-4 sm:grid-cols-2">
-            {opportunities.map((o) => (
-              <div key={o.id} className="nexa-card t-standard rounded-[var(--radius-lg)] p-5 hover:shadow-[var(--shadow-md)]">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="text-[14.5px] font-semibold leading-snug">{o.title}</div>
-                    <div className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{o.org}{o.fullyFunded ? " · Fully funded" : ""}</div>
-                  </div>
-                  <MatchRing value={o.match} size={40} />
-                </div>
-                <div className="mt-3 flex flex-wrap gap-1.5">{o.tags.map((t) => <Badge key={t}>{t}</Badge>)}</div>
-                <div className="mt-3 flex items-center justify-between">
-                  <span className="text-[11.5px]" style={{ color: "var(--text-tertiary)" }}>Deadline · {o.deadline}</span>
-                  <button onClick={() => navigate("/discover")} className="t-fast text-[12.5px] font-semibold" style={{ color: "var(--accent-strong)" }}>View opportunity →</button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+      <DashboardSection eyebrow="Opportunities" title="Opportunities for you" action={<button onClick={() => navigate("/discover")} className="t-fast text-[13px] font-semibold" style={{ color: "var(--accent-strong)" }}>See all opportunities</button>}>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {topOpportunities.map(({ opportunity, match }) => (
+            <OpportunityCard key={opportunity.id} opportunity={opportunity} match={match} compact />
+          ))}
+        </div>
       </DashboardSection>
 
       <DashboardSection eyebrow="Community" title="Women who've been there">
@@ -103,7 +89,7 @@ export default function Dashboard() {
           <div className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--accent-strong)" }}>Nexa</div>
           <div className="nexa-panel mt-3 rounded-[var(--radius-lg)] p-5">
             <div className="flex items-center gap-2"><span className="anim-glow inline-block h-2 w-2 rounded-full" style={{ background: "var(--accent-strong)" }} /><span className="text-[11px] font-semibold" style={{ color: "var(--text-tertiary)" }}>Active</span></div>
-            <p className="font-display mt-2 text-[15.5px]">I found {strongMatches || opportunities.length} opportunities that fit what you're looking for.</p>
+            <p className="font-display mt-2 text-[15.5px]">I found {strongMatches || topOpportunities.length} opportunities that fit what you're looking for.</p>
             <Button variant="secondary" size="sm" icon={Sparkles} onClick={openDrawer}>Ask Nexa</Button>
           </div>
         </Reveal>

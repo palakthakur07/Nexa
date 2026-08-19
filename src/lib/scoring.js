@@ -1,17 +1,7 @@
-// Deterministic MVP scoring/derivation logic. No AI, no backend — this is
-// the seam Phase 3+ replaces with a real recommendation service. Every
-// function here takes a profile object and returns a plain value, so the
-// swap is a matter of changing the implementation, not the call sites.
+// Roadmap/next-move derivation logic. Opportunity match scoring now lives
+// in lib/matching.js (Phase 3) — this file kept its two roadmap-related
+// functions since they're about the user's journey, not opportunity data.
 import { ROADMAP_TEMPLATE } from "../data/roadmap.js";
-
-export function calculateMatchScore(profile, opportunity) {
-  let score = 55;
-  if (opportunity.careerStages.includes(profile.careerStage)) score += 12;
-  score += Math.min(profile.interests.filter((i) => opportunity.interests.includes(i)).length * 8, 16);
-  score += Math.min(profile.goals.filter((g) => opportunity.goals.includes(g)).length * 8, 16);
-  score += Math.min(profile.priorities.filter((p) => opportunity.priorities.includes(p)).length * 4, 8);
-  return Math.max(58, Math.min(97, Math.round(score)));
-}
 
 export function getNextMove(profile) {
   if (profile.goals.includes("Study abroad") && profile.priorities.includes("Funding")) {
