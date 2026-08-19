@@ -1,0 +1,78 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,340..600&family=Manrope:wght@400;500;600;700;800&display=swap');
+
+#nexa-app {
+  --bg: #FBF7F3; --surface: #FFFFFF; --surface-muted: #FBEEEA; --surface-muted-strong: #F6E1DA;
+  --text-primary: #2B2422; --text-secondary: #8A7B76; --text-tertiary: #B7ABA5; --text-on-accent: #FFFFFF;
+  --accent: #C97B86; --accent-hover: #BD6874; --accent-soft: #F0D9DC; --accent-strong: #8C4B57;
+  --border: #EAE0DB; --border-strong: #DDCEC7;
+  --success: #7C9A78; --success-soft: #E7EFE3; --warning: #C99456; --warning-soft: #F5E9D6;
+  --font-display: 'Fraunces', Georgia, serif; --font-ui: 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
+  --radius-sm: 8px; --radius-md: 14px; --radius-lg: 22px; --radius-xl: 30px;
+  --shadow-sm: 0 1px 2px rgba(140,75,87,0.06), 0 1px 1px rgba(43,36,34,0.04);
+  --shadow-md: 0 8px 24px rgba(140,75,87,0.10), 0 2px 6px rgba(43,36,34,0.05);
+  --shadow-lg: 0 26px 60px rgba(140,75,87,0.20), 0 10px 22px rgba(43,36,34,0.08);
+  --ease-standard: cubic-bezier(0.22, 1, 0.36, 1); --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dur-fast: 150ms; --dur-standard: 280ms;
+  background: var(--bg); color: var(--text-primary); font-family: var(--font-ui);
+  position: relative; overflow-x: hidden;
+}
+#nexa-app * { box-sizing: border-box; }
+#nexa-app .font-display { font-family: var(--font-display); }
+#nexa-app ::selection { background: var(--accent-soft); color: var(--accent-strong); }
+#nexa-app :focus-visible { outline: 2px solid var(--accent-strong); outline-offset: 2px; border-radius: 6px; }
+#nexa-app button, #nexa-app input { font-family: inherit; }
+#nexa-app .t-fast { transition: all var(--dur-fast) var(--ease-standard); }
+#nexa-app .t-standard { transition: all var(--dur-standard) var(--ease-standard); }
+#nexa-app .t-spring { transition: all var(--dur-standard) var(--ease-spring); }
+#nexa-app .nexa-btn-primary { background: var(--accent-strong); color: var(--text-on-accent); }
+#nexa-app .nexa-btn-primary:hover:not(:disabled) { background: var(--accent-hover); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+#nexa-app .nexa-btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+#nexa-app .nexa-btn-secondary { background: var(--surface); color: var(--text-primary); border: 1px solid var(--border-strong); }
+#nexa-app .nexa-btn-secondary:hover:not(:disabled) { background: var(--surface-muted); border-color: var(--accent-strong); }
+#nexa-app .nexa-btn-ghost { background: transparent; color: var(--text-primary); }
+#nexa-app .nexa-btn-ghost:hover:not(:disabled) { background: var(--surface-muted); }
+#nexa-app .nexa-card { background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow-sm); }
+#nexa-app .nexa-panel { background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow-md); }
+#nexa-app .nexa-ai-input { background: var(--surface); border: 1px solid var(--border-strong); box-shadow: var(--shadow-sm); }
+#nexa-app .nexa-ai-input:focus-within { border-color: var(--accent-strong); box-shadow: var(--shadow-md), 0 0 0 3px var(--accent-soft); }
+#nexa-app .nexa-nav { background: transparent; border-bottom: 1px solid transparent; }
+#nexa-app .nexa-nav[data-scrolled="true"] { background: rgba(251,247,243,0.88); backdrop-filter: blur(10px); border-bottom-color: var(--border); box-shadow: var(--shadow-sm); }
+#nexa-app .nexa-nav-link { color: var(--text-secondary); }
+#nexa-app .nexa-nav-link:hover { color: var(--text-primary); }
+#nexa-app .pillar-tab { color: var(--text-tertiary); border-left: 2px solid var(--border); }
+#nexa-app .pillar-tab[data-active="true"] { color: var(--text-primary); border-left-color: var(--accent-strong); }
+#nexa-app .pillar-tab:hover { color: var(--text-primary); }
+#nexa-app .chip { background: var(--surface); border: 1px solid var(--border); color: var(--text-secondary); }
+#nexa-app .chip:hover { border-color: var(--accent); color: var(--accent-strong); background: var(--accent-soft); }
+#nexa-app .chip[data-selected="true"] { background: var(--accent-strong); border-color: var(--accent-strong); color: #fff; }
+#nexa-app .select-card { background: var(--surface); border: 1px solid var(--border); }
+#nexa-app .select-card:hover { border-color: var(--accent); box-shadow: var(--shadow-sm); }
+#nexa-app .select-card[data-selected="true"] { border-color: var(--accent-strong); background: var(--accent-soft); }
+#nexa-app .no-scrollbar::-webkit-scrollbar { display: none; }
+#nexa-app .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+#nexa-app .reveal { opacity: 0; transform: translateY(18px); transition: opacity 600ms var(--ease-standard), transform 600ms var(--ease-standard); }
+#nexa-app .reveal.in { opacity: 1; transform: translateY(0); }
+@keyframes nexa-pulse-soft { 0%,100% { opacity:1; transform: scale(1);} 50% { opacity:0.85; transform: scale(1.04);} }
+@keyframes nexa-glow { 0%,100% { opacity:0.5;} 50% { opacity:1;} }
+@keyframes nexa-drawer-in { from { opacity:0; transform: translateY(24px) scale(0.98);} to { opacity:1; transform: translateY(0) scale(1);} }
+@keyframes nexa-spin-slow { to { transform: rotate(360deg); } }
+#nexa-app .anim-pulse { animation: nexa-pulse-soft 3.2s ease-in-out infinite; }
+#nexa-app .anim-glow { animation: nexa-glow 2.4s ease-in-out infinite; }
+#nexa-app .anim-drawer { animation: nexa-drawer-in var(--dur-standard) var(--ease-spring) both; }
+#nexa-app .anim-spin-slow { animation: nexa-spin-slow 2.6s linear infinite; }
+#nexa-app .hero-stage { perspective: 2100px; perspective-origin: 50% 42%; }
+#nexa-app .hero-idle { transform-style: preserve-3d; animation: nexa-idle-drift 18s ease-in-out infinite; }
+@keyframes nexa-idle-drift { 0%,100% { transform: rotateY(-1.1deg) rotateX(0.5deg);} 50% { transform: rotateY(1.1deg) rotateX(-0.5deg);} }
+#nexa-app .hero-camera { transform-style: preserve-3d; transition: transform 500ms cubic-bezier(0.22,1,0.36,1); will-change: transform; }
+#nexa-app .screen-3d { position: absolute; left: 50%; top: 50%; transform-style: preserve-3d; will-change: transform; }
+#nexa-app .screen-3d-float { transform-style: preserve-3d; animation-name: nexa-float-3d; animation-timing-function: ease-in-out; animation-iteration-count: infinite; }
+@keyframes nexa-float-3d { 0%,100% { transform: translate3d(0,0,0) rotateZ(0deg);} 50% { transform: translate3d(var(--fx,0px), var(--fy,-8px), var(--fz,0px)) rotateZ(var(--fr,0deg));} }
+#nexa-app .screen-3d-card { transition: transform 360ms var(--ease-spring), box-shadow 360ms var(--ease-standard), border-color 360ms var(--ease-standard), filter 360ms var(--ease-standard); transform: translateZ(0px) scale(1); }
+#nexa-app .screen-3d:hover .screen-3d-float { animation-play-state: paused; }
+#nexa-app .screen-3d:hover .screen-3d-card, #nexa-app .screen-3d:focus-within .screen-3d-card { transform: translateZ(46px) scale(1.06); box-shadow: var(--shadow-lg); border-color: var(--border-strong); }
+#nexa-app .screen-chrome-dot { width: 6px; height: 6px; border-radius: 50%; }
+@media (prefers-reduced-motion: reduce) {
+  #nexa-app .screen-3d-float, #nexa-app .hero-idle, #nexa-app .anim-pulse, #nexa-app .anim-glow, #nexa-app .anim-spin-slow { animation: none !important; }
+  #nexa-app .hero-camera { transition: none !important; }
+  #nexa-app .reveal { transition: opacity 300ms linear; transform: none !important; }
+}

@@ -1,10 +1,12 @@
-# NEXA — Phase 1
+# NEXA
 
-Interactive landing experience: hero as a real CSS 3D scene (perspective
-camera, translate3d depth, mouse-driven camera parallax), the four-pillar
-story, a Nexa intelligence preview, community and roadmap sections, and a
-Nexa entry drawer. Built on the Phase 0 token system (colors, type, radius,
-motion — all as CSS custom properties in `src/App.jsx`).
+## Phase 2 — personalization experience
+
+Landing → onboarding → analysis → personalized dashboard → profile, built
+as a real multi-page app with React Router and `localStorage`-backed
+profile state. Phase 1's hero (3D floating-screen scene) and story sections
+are unchanged, now living under `src/components/hero/` and
+`src/components/landing/`.
 
 ## Run it
 
@@ -13,54 +15,88 @@ npm install
 npm run dev
 ```
 
-Then open the printed local URL. `npm run build` produces a static
-production build in `dist/`.
+`npm run build` produces a static production build in `dist/`.
 
 ## Project structure
 
 ```
 index.html
 src/
-  main.jsx      — React entry point
-  App.jsx       — the entire NEXA Phase 1 experience (single component tree)
-  index.css     — Tailwind directives
-tailwind.config.js
-postcss.config.js
-vite.config.js
-package.json
+  main.jsx                  — entry point (BrowserRouter, token styles)
+  App.jsx                   — route table + global providers
+  styles/tokens.css         — design tokens (colors, type, radius, motion)
+  index.css                 — Tailwind directives
+
+  context/
+    ProfileContext.jsx      — profile state + localStorage persistence
+    NexaDrawerContext.jsx   — Nexa preview drawer open/close state
+
+  data/                     — mock data layer (swap for real API/DB later)
+    opportunities.js
+    women.js
+    communities.js
+    roadmap.js
+    onboardingOptions.js    — option lists shared by onboarding + profile
+
+  lib/
+    scoring.js              — calculateMatchScore / getNextMove / generateRoadmap
+    hooks.jsx                — useReveal, Reveal, useCameraParallax
+
+  components/
+    ui/                     — Button, Badge, Avatar, Chip, SelectCard, MatchRing
+    Character.jsx           — central character asset slot
+    NavBar.jsx, Footer.jsx, NexaDrawer.jsx
+    hero/                   — HeroScene, FloatingScreen, mini-screen contents
+    landing/Sections.jsx    — Problem / Pillars / Nexa intelligence / Final CTA
+    onboarding/             — OnboardingLayout, ProgressDots, Steps
+    dashboard/              — DashboardSection, EmptyState
+
+  pages/
+    Landing.jsx              — /
+    Onboarding.jsx            — /onboarding
+    Analysis.jsx               — /analysis
+    Dashboard.jsx              — /dashboard
+    Profile.jsx                 — /profile
+    PlaceholderRoute.jsx        — /discover, /people, /roadmap
 ```
 
-Everything — design tokens, primitives (Button, Badge, Avatar…), the hero's
-3D scene, and every section — currently lives in `src/App.jsx`. It was kept
-as one file to match how it was designed and reviewed phase-by-phase; if
-you're continuing development, the natural next step is splitting it into
-`src/components/`, `src/sections/`, and `src/tokens.css`.
+## Routes
+
+| Path | Page |
+|---|---|
+| `/` | Landing (hero 3D scene + story) |
+| `/onboarding` | 7-step guided onboarding |
+| `/analysis` | Simulated "NEXA is connecting the dots" transition |
+| `/dashboard` | Personalized dashboard |
+| `/profile` | Edit the profile NEXA uses |
+| `/discover`, `/people`, `/roadmap` | Lightweight placeholders reached from the hero and story sections |
+
+## State & persistence
+
+`ProfileContext` holds one profile object (career stage, interests, goals,
+skills, priorities, location, name, `onboardingComplete`) and writes it to
+`localStorage` on every change, wrapped in try/catch so a private-browsing
+or storage-full environment degrades to session-only state instead of
+crashing. Refreshing mid-onboarding keeps your answers.
 
 ## Swapping in the real character asset
 
-`src/App.jsx` exports a `Character` component near the top of the file. Right
-now it falls back to an illustrated placeholder. To use a real asset:
-
 ```jsx
-<HeroScene characterSrc="/images/nexa-character.png" ... />
+<HeroScene characterSrc="/images/nexa-character.png" />
 ```
 
-passed down from `NexaLanding` at the bottom of the file. Use a transparent
-PNG/WebP around 300×480 for the best fit with the existing frame.
+in `pages/Landing.jsx`. Use a transparent PNG/WebP around 300×480.
 
 ## What's mock data
 
-- Hero screen contents (94% match, ₹3.2L, "8 communities", roadmap %) —
-  `buildScreens()` in `App.jsx`.
-- The Nexa conversation preview — hardcoded in `NexaIntelligenceSection`.
-- The three profile cards — the `women` array.
-- `/discover`, `/people`, `/roadmap` are lightweight placeholder views (no
-  router yet — see `NexaLanding`'s `view` state) rather than real routes.
+Everything under `src/data/` is demo/placeholder content, plus the
+deterministic (non-AI) scoring functions in `src/lib/scoring.js`. Replace
+the data files with real API/DB calls later — nothing else needs to change
+since components only depend on the shapes those files export.
 
 ## Known limitations
 
-- No backend, no router, no persisted state.
-- The central character is an illustrated placeholder — see above for the
-  swap path.
-- Not yet QA'd in a live browser across breakpoints; worth checking
-  1440 / 1024 / 768 / 430px once running.
+- No backend, no real authentication, no real AI — match scores and the
+  analysis screen are deterministic/simulated, by design for this phase.
+- Not yet QA'd across breakpoints in a live browser.
+- The central character is still an illustrated placeholder — see above.
