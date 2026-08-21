@@ -1,110 +1,189 @@
 # NEXA
 
-## Phase 5 — the NEXA AI assistant
+A career-opportunity discovery platform, a women's mentorship network, and a
+context-aware AI assistant (NEXA) — now backed by **real authentication and a
+real database (Supabase)**, with a cinematic, animated UI (Framer Motion).
 
-Landing → onboarding → dashboard → discover → network → **NEXA** (Phase 5):
-a full-screen, context-aware assistant with conversation history, a
-dynamic context panel, structured/actionable responses, and a deterministic
-demo mode that works with zero configuration. Phases 1–4 are unchanged
-except for the "Ask Nexa" entry points, which now open `/nexa` with
-context instead of a small preview drawer, and one pre-existing bug fix
-(see below).
+Landing → sign up / log in → onboarding → dashboard → discover → network → NEXA.
 
-## Run it
+---
 
+## What changed in this version
+
+- **Real auth** — email/password, Google OAuth, password reset, and email
+  verification, all via Supabase. Product routes are protected; signed-out
+  users are redirected to `/login`.
+- **Real data** — the opportunities catalog, mentor network, saved
+  opportunities, connection requests, and NEXA conversations are now stored in
+  Supabase (Postgres) with Row Level Security, per user. **No more mock/demo
+  data or fake seeded requests.**
+- **Cinematic animations** — smooth page transitions, an animated nav bar,
+  scroll-reveal + lift-on-hover cards, and animated auth screens (Framer
+  Motion). Respects `prefers-reduced-motion`.
+- **Graceful fallback** — if Supabase env vars are absent, the app runs in a
+  local demo mode (bundled sample data + localStorage) so it still boots with
+  zero configuration.
+
+---
+
+## Prerequisites
+
+- **Node.js 18+** and npm
+- A free **Supabase** account — https://supabase.com
+
+---
+
+## Setup (one time)
+
+### 1. Install dependencies
 ```bash
 npm install
+```
+
+### 2. Create a Supabase project
+1. Go to https://supabase.com → **New project** (the free tier is enough).
+2. Wait for it to finish provisioning.
+
+### 3. Create the database schema
+1. In the Supabase dashboard, open **SQL Editor → New query**.
+2. Paste the entire contents of [`supabase/schema.sql`](supabase/schema.sql) and click **Run**.
+   - This creates all tables, Row Level Security policies, and the trigger that
+     auto-creates a profile row on signup.
+3. Open another **New query**, paste [`supabase/seed.sql`](supabase/seed.sql), and **Run**.
+   - This loads the opportunities and mentors catalogs.
+
+> Both files are safe to re-run — they use `create ... if not exists` and
+> `on conflict ... do update` (idempotent upserts).
+
+### 4. Enable authentication providers
+- **Email/password** is on by default.
+- **Email verification:** Dashboard → **Authentication → Providers → Email** —
+  toggle "Confirm email" on (recommended) or off (instant login for testing).
+- **Google OAuth:** Dashboard → **Authentication → Providers → Google** —
+  enable it and paste your Google OAuth client ID + secret
+  (from https://console.cloud.google.com → APIs & Services → Credentials).
+  Add this authorized redirect URL in Google Cloud:
+  `https://YOUR-PROJECT-ref.supabase.co/auth/v1/callback`
+
+### 5. Configure redirect URLs
+Dashboard → **Authentication → URL Configuration**:
+- **Site URL:** `http://localhost:5173` (Vite's default dev URL)
+- **Redirect URLs:** add `http://localhost:5173/**`
+  (and your production URL later, e.g. `https://yourdomain.com/**`)
+
+### 6. Add your keys to `.env`
+```bash
+cp .env.example .env
+```
+Then edit `.env` and fill in (from Supabase → **Project Settings → API**):
+```
+VITE_SUPABASE_URL=https://YOUR-PROJECT-ref.supabase.co
+VITE_SUPABASE_ANON_KEY=YOUR-ANON-PUBLIC-KEY
+```
+
+---
+
+## Run
+
+```bash
 npm run dev
 ```
+Open the printed URL (default http://localhost:5173).
 
-## Project structure (additions since Phase 4)
+### Verify it works
+1. Click **Get started** → create an account (or **Continue with Google**).
+2. If email confirmation is on, click the link in your inbox, then sign in.
+3. Complete onboarding → you land on the dashboard with real, matched data.
+4. Save an opportunity, then reload / open in another browser signed in as the
+   same user — it persists (it's in Supabase, not localStorage).
+5. In the Supabase dashboard → **Table Editor**, confirm rows appear in
+   `profiles`, `saved_opportunities`, `conversations`, etc.
+
+### Build / preview production
+```bash
+npm run build     # outputs to dist/
+npm run preview   # serves the production build locally
+```
+
+---
+
+## Project structure (key additions)
 
 ```
-src/
-  context/
-    ConversationsContext.jsx    — multiple conversations, localStorage-backed, auto-titled
+supabase/
+  schema.sql                     — tables + RLS + signup trigger (run first)
+  seed.sql                       — opportunities + mentors catalog (run second)
 
+src/
   lib/
-    nexaContext.js               — buildNexaContext(): assembles the structured context object
-    nexaAIService.js             — askNexa(): provider abstraction + automatic demo-mode fallback
-    nexaSystemPrompt.js          — system instruction used only if a real provider is configured
-    nexaMock.js                  — deterministic "NEXA demo mode" reasoning engine
-    suggestedPrompts.js          — profile/context-aware suggested prompt generator
-    markdownLite.jsx             — safe, minimal formatter (bold/bullets/numbered/line breaks)
+    supabaseClient.js            — the single Supabase client (null if unconfigured)
+    dataService.js               — all DB reads/writes (catalog, saved, requests, chats)
+    mappers.js                   — snake_case row <-> camelCase app-shape mappers
+    nexaContext.js               — now takes catalog arrays as params (no data import)
+
+  context/
+    AuthContext.jsx              — session, sign up/in/out, Google, reset, verify
+    CatalogContext.jsx           — opportunities + mentors from Supabase (or fallback)
+    ProfileContext.jsx           — per-user profile row (Supabase-backed)
+    SavedContext.jsx             — per-user saved opportunities
+    ConnectionsContext.jsx       — per-user connection requests
+    ConversationsContext.jsx     — per-user NEXA conversations + messages
 
   components/
-    nexa/
-      ConversationSidebar.jsx, ContextPanel.jsx, WelcomeState.jsx, NexaOrb.jsx
-      MessageComposer.jsx, UserMessage.jsx, NexaMessage.jsx, ActionCard.jsx
-      SuggestionChip.jsx, TypingIndicator.jsx
+    auth/
+      AuthLayout.jsx             — shared animated auth card + fields + Google button
+      ProtectedRoute.jsx         — gates product routes behind auth
+    motion/
+      PageTransition.jsx         — per-route fade/rise transition
 
   pages/
-    Nexa.jsx                     — /nexa
+    Login.jsx, Signup.jsx, ResetPassword.jsx,
+    UpdatePassword.jsx, AuthCallback.jsx   — the auth flow
 ```
 
 ## Routes
 
-| Path | Page |
-|---|---|
-| `/nexa` | Full-screen assistant: conversation sidebar (desktop) / drawer (mobile), chat, dynamic context panel |
+| Path | Access | Page |
+|---|---|---|
+| `/` | public | Landing |
+| `/login`, `/signup` | public | Auth |
+| `/reset-password`, `/auth/update-password` | public | Password reset flow |
+| `/auth/callback` | public | OAuth / email-verify landing |
+| `/onboarding`, `/analysis` | protected | Onboarding flow |
+| `/dashboard`, `/profile` | protected | Home + profile |
+| `/discover`, `/discover/:id`, `/saved` | protected | Opportunities |
+| `/network`, `/network/:id`, `/network/connections` | protected | Mentor network |
+| `/nexa` | protected | AI assistant |
 
-Entry points that open `/nexa` with context: Dashboard's "Ask Nexa", Discover's featured-opportunity "Ask NEXA about this", the Opportunity Detail page, Network's "Ask NEXA who I should talk to", a Woman Detail profile, the Profile page's "Ask NEXA about my next step", and a persistent sparkle icon in the nav bar (no context).
+---
 
-## AI provider
+## Data model (Supabase)
 
-**None is configured by default.** `lib/nexaAIService.js` reads
-`VITE_NEXA_AI_API_KEY` (see `.env.example`) — if unset, which is the
-default, NEXA runs entirely in demo mode. If set, it attempts an
-OpenAI-chat-completions-style call and **automatically falls back to demo
-mode** on any failure, so a bad key or network error never breaks the UI.
+| Table | Holds | Access |
+|---|---|---|
+| `profiles` | onboarding answers, roadmap, per user | own row only (RLS) |
+| `opportunities` | public catalog | read-only to all |
+| `mentors` | public mentor directory | read-only to all |
+| `saved_opportunities` | saved items + status, per user | own rows only |
+| `connection_requests` | mentorship requests sent, per user | own rows only |
+| `conversations` / `messages` | NEXA chat history, per user | own rows only |
 
-**Security note:** any key placed in `VITE_NEXA_AI_API_KEY` ships inside
-client-side JavaScript — visible to anyone with dev tools open. This path
-exists for local experimentation only. For a real deployment, replace
-`callRealProvider()` in `nexaAIService.js` with a call to your own
-backend/proxy that holds the key server-side.
+A profile row is created automatically on signup by a Postgres trigger
+(`handle_new_user`), so `profiles` always stays in sync with `auth.users`.
 
-## Environment variables
+---
 
-All optional (see `.env.example`):
-- `VITE_NEXA_AI_API_KEY`
-- `VITE_NEXA_AI_BASE_URL` (defaults to OpenAI's chat completions endpoint)
-- `VITE_NEXA_AI_MODEL` (defaults to `gpt-4o-mini`)
+## Notes & limitations
 
-## Mock fallback behavior ("NEXA demo mode")
+- **Incoming ("received") connection requests** need a mentor-facing app that
+  doesn't exist yet, so that list is genuinely empty until that's built — the
+  previous fabricated inbound requests were removed. Requests you **send** are
+  real rows in `connection_requests`.
+- **In-app messaging** isn't built yet; the woman-detail page gives you
+  conversation starters to copy.
+- The NEXA assistant defaults to its deterministic demo mode; wire a real
+  provider via the optional `VITE_NEXA_AI_*` vars (see `.env.example`) — but
+  only through your own backend proxy in production.
+- To regenerate `supabase/seed.sql` from the bundled sample arrays:
+  `node scripts/.gen-seed.mjs`
 
-`lib/nexaMock.js` pattern-matches the user's message against the live
-context object and returns a grounded, structured response — never a
-generic "this is a demo response." Covers: next step, prioritizing among
-matched opportunities (including "fully funded" / "closes soonest"
-filters), eligibility review, comparing saved opportunities, network
-recommendations ("who should I talk to"), roadmap status and 30-day
-planning, profile strengths/gaps, and basic application-writing guidance
-(essay/SOP/email — structural help, not a finished document). A small
-"Demo mode" indicator shows in the context panel whenever no provider is
-configured.
-
-## Real actions, not fake links
-
-NEXA's action cards perform real state changes: `SAVE_OPPORTUNITY` calls
-the same `SavedContext` Discover uses; `ADD_TO_ROADMAP` calls a new
-`addRoadmapItem()` on `ProfileContext` (additive — appends to the
-auto-generated roadmap from `lib/scoring.js`, never replaces it);
-`OPEN_*` actions navigate with React Router. Every action shows an
-explicit confirmation ("Added to your roadmap.") rather than silently
-mutating state.
-
-## A pre-existing bug fixed in this phase
-
-`components/hero/screens.config.js` (from Phase 3) contained JSX but had a
-`.js` extension — Vite's default esbuild config does not parse JSX in
-`.js` files, so this would have failed a real build. Renamed to
-`screens.config.jsx` and the one import in `HeroScene.jsx` updated to
-match. Caught by re-validating the whole project during this phase.
-
-## Known limitations
-
-- Demo mode is the only fully-tested path in this environment (no real API key available here).
-- The real-provider path returns plain text only — no structured actions from a live model yet (that contract would be a good Phase 6 addition).
-- Conversation history persists via `localStorage`, per-browser only.
-- Not yet QA'd across breakpoints in a live browser.

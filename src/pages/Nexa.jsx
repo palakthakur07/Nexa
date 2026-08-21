@@ -12,6 +12,7 @@ import { useProfile } from "../context/ProfileContext.jsx";
 import { useSaved } from "../context/SavedContext.jsx";
 import { useConnections } from "../context/ConnectionsContext.jsx";
 import { useConversations } from "../context/ConversationsContext.jsx";
+import { useCatalog } from "../context/CatalogContext.jsx";
 import { buildNexaContext } from "../lib/nexaContext.js";
 import { askNexa } from "../lib/nexaAIService.js";
 import { generateSuggestedPrompts } from "../lib/suggestedPrompts.js";
@@ -23,6 +24,7 @@ export default function Nexa() {
   const { saved, toggleSave } = useSaved();
   const { connections } = useConnections();
   const { conversations, activeId, setActiveId, createConversation, addMessage, deleteConversation } = useConversations();
+  const { opportunities, mentors } = useCatalog();
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [contextOpen, setContextOpen] = useState(false);
@@ -34,8 +36,8 @@ export default function Nexa() {
   const entryContext = active?.entryContext || null;
 
   const context = useMemo(
-    () => buildNexaContext({ profile, saved, connections, entryContext }),
-    [profile, saved, connections, entryContext]
+    () => buildNexaContext({ profile, saved, connections, entryContext, opportunities, women: mentors }),
+    [profile, saved, connections, entryContext, opportunities, mentors]
   );
 
   // Seed a conversation from router state (contextual entry from
@@ -46,7 +48,7 @@ export default function Nexa() {
     const incoming = location.state?.entryContext || null;
     if (incoming) {
       const id = createConversation(incoming);
-      const ctx = buildNexaContext({ profile, saved, connections, entryContext: incoming });
+      const ctx = buildNexaContext({ profile, saved, connections, entryContext: incoming, opportunities, women: mentors });
       setThinking(true);
       askNexa("", ctx, []).then((res) => {
         addMessage(id, { id: `m-${Date.now()}`, role: "nexa", content: res.content, actions: res.actions, createdAt: new Date().toISOString() });
@@ -155,3 +157,7 @@ export default function Nexa() {
     </div>
   );
 }
+
+
+
+

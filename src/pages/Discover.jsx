@@ -10,8 +10,7 @@ import SomeoneWhosBeenThere from "../components/network/SomeoneWhosBeenThere.jsx
 import Button from "../components/ui/Button.jsx";
 import { Reveal } from "../lib/hooks.jsx";
 import { useProfile } from "../context/ProfileContext.jsx";
-import { OPPORTUNITIES } from "../data/opportunities.js";
-import { WOMEN } from "../data/women.js";
+import { useCatalog } from "../context/CatalogContext.jsx";
 import { calculateMatchScore } from "../lib/matching.js";
 import { calculateWomanMatchScore } from "../lib/womanMatching.js";
 import { deadlineBucket, daysLeft } from "../lib/deadline.js";
@@ -38,14 +37,15 @@ function matchesSearch(opp, query) {
 
 export default function Discover() {
   const { profile } = useProfile();
+  const { opportunities, mentors } = useCatalog();
   const [query, setQuery] = useState("");
   const [filters, setFilters] = useState(emptyFilters);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [sort, setSort] = useState("best-match");
 
   const scored = useMemo(
-    () => OPPORTUNITIES.map((o) => ({ opportunity: o, match: calculateMatchScore(profile, o) })),
-    [profile]
+    () => opportunities.map((o) => ({ opportunity: o, match: calculateMatchScore(profile, o) })),
+    [profile, opportunities]
   );
 
   const filtered = useMemo(
@@ -57,7 +57,7 @@ export default function Discover() {
     const list = [...filtered];
     if (sort === "best-match") list.sort((a, b) => b.match - a.match);
     else if (sort === "deadline") list.sort((a, b) => daysLeft(a.opportunity.deadline) - daysLeft(b.opportunity.deadline));
-    else if (sort === "recent") list.sort((a, b) => OPPORTUNITIES.indexOf(b.opportunity) - OPPORTUNITIES.indexOf(a.opportunity));
+    else if (sort === "recent") list.sort((a, b) => opportunities.indexOf(b.opportunity) - opportunities.indexOf(a.opportunity));
     else if (sort === "funding") {
       const rank = { "Fully funded": 3, "Paid": 2, "Partially funded": 1, "Unpaid": 0, "No funding": 0 };
       list.sort((a, b) => (rank[b.opportunity.funding.type] ?? 0) - (rank[a.opportunity.funding.type] ?? 0));
@@ -72,14 +72,14 @@ export default function Discover() {
   // (falls back to the user's best overall match).
   const relevantWoman = useMemo(() => {
     if (!featured) return null;
-    const scored = WOMEN.map((w) => ({
+    const scored = mentors.map((w) => ({
       woman: w,
       relevance: w.experience.filter((e) => featured.opportunity.categories.includes(e)).length,
       match: calculateWomanMatchScore(profile, w),
     }));
     scored.sort((a, b) => b.relevance - a.relevance || b.match - a.match);
     return scored[0]?.woman || null;
-  }, [featured, profile]);
+  }, [featured, profile, mentors]);
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-14 md:px-10">
@@ -131,3 +131,7 @@ export default function Discover() {
     </div>
   );
 }
+
+
+
+

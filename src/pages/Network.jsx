@@ -10,7 +10,7 @@ import GiveBackCard from "../components/network/GiveBackCard.jsx";
 import Button from "../components/ui/Button.jsx";
 import { Reveal } from "../lib/hooks.jsx";
 import { useProfile } from "../context/ProfileContext.jsx";
-import { WOMEN } from "../data/women.js";
+import { useCatalog } from "../context/CatalogContext.jsx";
 import { calculateWomanMatchScore } from "../lib/womanMatching.js";
 
 function matchesFilters(woman, filters) {
@@ -32,12 +32,13 @@ function matchesSearch(woman, query) {
 
 export default function Network() {
   const { profile } = useProfile();
+  const { mentors } = useCatalog();
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [filters, setFilters] = useState(emptyNetworkFilters);
   const [filtersOpen, setFiltersOpen] = useState(false);
 
-  const scored = useMemo(() => WOMEN.map((w) => ({ woman: w, match: calculateWomanMatchScore(profile, w) })).sort((a, b) => b.match - a.match), [profile]);
+  const scored = useMemo(() => mentors.map((w) => ({ woman: w, match: calculateWomanMatchScore(profile, w) })).sort((a, b) => b.match - a.match), [profile, mentors]);
   const filtered = useMemo(() => scored.filter(({ woman }) => matchesFilters(woman, filters) && matchesSearch(woman, query)), [scored, filters, query]);
 
   const topMatches = scored.slice(0, 5);
@@ -93,3 +94,5 @@ export default function Network() {
     </div>
   );
 }
+
+

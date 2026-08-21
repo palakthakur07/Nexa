@@ -2,13 +2,16 @@
 // (per the brief: "do not send unnecessary application data with every
 // request"). This is pure data assembly, no UI, no network — the same
 // object works whether it's fed to a real provider or the mock engine.
-import { OPPORTUNITIES } from "../data/opportunities.js";
-import { WOMEN } from "../data/women.js";
 import { calculateMatchScore } from "./matching.js";
 import { calculateWomanMatchScore } from "./womanMatching.js";
 import { getNextMove, generateRoadmap } from "./scoring.js";
 
-export function buildNexaContext({ profile, saved, connections, entryContext }) {
+// `opportunities` and `women` are the live catalog arrays (from Supabase via
+// CatalogContext, or the offline sample data). Passing them in keeps this
+// module free of any direct data-source import.
+export function buildNexaContext({ profile, saved, connections, entryContext, opportunities = [], women = [] }) {
+  const OPPORTUNITIES = opportunities;
+  const WOMEN = women;
   const savedOpportunities = Object.entries(saved || {}).map(([id, record]) => {
     const opportunity = OPPORTUNITIES.find((o) => o.id === id);
     if (!opportunity) return null;
@@ -60,3 +63,4 @@ export function buildNexaContext({ profile, saved, connections, entryContext }) 
     entryContext: entryContext || null,
   };
 }
+

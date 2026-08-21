@@ -8,8 +8,7 @@ import OpportunityCard from "../components/discover/OpportunityCard.jsx";
 import DashboardSection from "../components/dashboard/DashboardSection.jsx";
 import { Reveal } from "../lib/hooks.jsx";
 import { useProfile } from "../context/ProfileContext.jsx";
-import { OPPORTUNITIES } from "../data/opportunities.js";
-import { WOMEN } from "../data/women.js";
+import { useCatalog } from "../context/CatalogContext.jsx";
 import { COMMUNITIES } from "../data/communities.js";
 import { calculateMatchScore } from "../lib/matching.js";
 import { calculateWomanMatchScore } from "../lib/womanMatching.js";
@@ -17,19 +16,20 @@ import { getNextMove, generateRoadmap } from "../lib/scoring.js";
 
 export default function Dashboard() {
   const { profile } = useProfile();
+  const { opportunities, mentors } = useCatalog();
   const navigate = useNavigate();
 
   // Same data + same matching engine as /discover (lib/matching.js), so
   // the dashboard's "top picks" and the full Discover results never drift
   // out of sync with each other.
   const topOpportunities = useMemo(
-    () => OPPORTUNITIES.map((o) => ({ opportunity: o, match: calculateMatchScore(profile, o) })).sort((a, b) => b.match - a.match).slice(0, 3),
-    [profile]
+    () => opportunities.map((o) => ({ opportunity: o, match: calculateMatchScore(profile, o) })).sort((a, b) => b.match - a.match).slice(0, 3),
+    [profile, opportunities]
   );
   // Same principle for the women network (lib/womanMatching.js, Phase 4).
   const topWomen = useMemo(
-    () => WOMEN.map((w) => ({ woman: w, match: calculateWomanMatchScore(profile, w) })).sort((a, b) => b.match - a.match).slice(0, 3),
-    [profile]
+    () => mentors.map((w) => ({ woman: w, match: calculateWomanMatchScore(profile, w) })).sort((a, b) => b.match - a.match).slice(0, 3),
+    [profile, mentors]
   );
   const nextMove = useMemo(() => getNextMove(profile), [profile]);
   const roadmap = useMemo(() => generateRoadmap(profile), [profile]);
@@ -41,7 +41,7 @@ export default function Dashboard() {
       <Reveal>
         <h1 className="font-display text-[2.2rem] md:text-[2.6rem]">Good morning, {profile.name || "there"}.</h1>
         <p className="mt-2 text-[14.5px]" style={{ color: "var(--text-secondary)" }}>
-          Here's what NEXA found for you. <span style={{ color: "var(--text-tertiary)" }}>Demo data — for now.</span>
+          Here's what NEXA found for you.
         </p>
       </Reveal>
 
@@ -64,7 +64,6 @@ export default function Dashboard() {
         <div className="grid gap-4 sm:grid-cols-3">
           {topWomen.map(({ woman, match }) => <WomanCard key={woman.id} woman={woman} match={match} />)}
         </div>
-        <div className="mt-2 text-[11px]" style={{ color: "var(--text-tertiary)" }}>Demo profiles — not real users.</div>
       </DashboardSection>
 
       <DashboardSection eyebrow="Progress" title="Your roadmap" action={<span className="font-display text-[1.4rem]">{progressPct}%</span>}>
@@ -119,3 +118,7 @@ export default function Dashboard() {
     </div>
   );
 }
+
+
+
+

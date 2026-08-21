@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import Badge from "../ui/Badge.jsx";
 import MatchRing from "../ui/MatchRing.jsx";
 import DeadlineBadge from "./DeadlineBadge.jsx";
@@ -9,12 +10,17 @@ import SaveButton from "./SaveButton.jsx";
 export default function OpportunityCard({ opportunity, match, compact = false }) {
   const navigate = useNavigate();
   return (
-    <div
+    <motion.div
       role="button"
       tabIndex={0}
       onClick={() => navigate(`/discover/${opportunity.id}`)}
       onKeyDown={(e) => { if (e.key === "Enter") navigate(`/discover/${opportunity.id}`); }}
-      className="nexa-card t-standard cursor-pointer rounded-[var(--radius-lg)] p-5 hover:shadow-[var(--shadow-md)]"
+      initial={{ opacity: 0, y: 18 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-40px" }}
+      transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+      whileHover={{ y: -6, boxShadow: "var(--shadow-lg)" }}
+      className="nexa-card cursor-pointer rounded-[var(--radius-lg)] p-5"
     >
       <div className="flex items-start justify-between gap-3">
         <div>
@@ -40,6 +46,8 @@ export default function OpportunityCard({ opportunity, match, compact = false })
           <SaveButton id={opportunity.id} size="sm" />
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
+
+

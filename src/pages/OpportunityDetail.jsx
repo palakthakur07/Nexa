@@ -11,7 +11,7 @@ import EligibilitySection from "../components/discover/EligibilitySection.jsx";
 import ApplicationSteps from "../components/discover/ApplicationSteps.jsx";
 import { Reveal } from "../lib/hooks.jsx";
 import { useProfile } from "../context/ProfileContext.jsx";
-import { OPPORTUNITIES } from "../data/opportunities.js";
+import { useCatalog } from "../context/CatalogContext.jsx";
 import { calculateMatchScore, getMatchBreakdown, getMatchReasons } from "../lib/matching.js";
 import { deadlineStatus, formatDeadline } from "../lib/deadline.js";
 
@@ -28,9 +28,18 @@ export default function OpportunityDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { profile, addRoadmapItem } = useProfile();
+  const { opportunities, loading } = useCatalog();
   const [addedToRoadmap, setAddedToRoadmap] = useState(false);
 
-  const opportunity = OPPORTUNITIES.find((o) => o.id === id);
+  const opportunity = opportunities.find((o) => o.id === id);
+
+  if (loading) {
+    return (
+      <div className="mx-auto flex min-h-[60vh] max-w-lg items-center justify-center px-6">
+        <div className="anim-spin-slow h-8 w-8 rounded-full" style={{ border: "3px solid var(--accent-soft)", borderTopColor: "var(--accent-strong)" }} />
+      </div>
+    );
+  }
 
   if (!opportunity) {
     return (
@@ -60,7 +69,7 @@ export default function OpportunityDetail() {
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--text-tertiary)" }}>{opportunity.type}</span>
-              {opportunity.verified && <Badge tone="success">Demo listing</Badge>}
+              {opportunity.verified && <Badge tone="success">Verified</Badge>}
             </div>
             <h1 className="font-display mt-2 text-[2.1rem] leading-tight md:text-[2.4rem]">{opportunity.title}</h1>
             <div className="mt-1 text-[14px]" style={{ color: "var(--text-secondary)" }}>{opportunity.organization} · {opportunity.location}</div>
@@ -159,3 +168,6 @@ export default function OpportunityDetail() {
     </div>
   );
 }
+
+
+

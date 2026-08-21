@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import Badge from "../ui/Badge.jsx";
 import Avatar from "../ui/Avatar.jsx";
 import MatchRing from "../ui/MatchRing.jsx";
@@ -10,11 +11,16 @@ export default function WomanCard({ woman, match }) {
   const navigate = useNavigate();
   const initials = woman.name.split(" ").map((n) => n[0]).slice(0, 2).join("");
   return (
-    <div
+    <motion.div
       role="button" tabIndex={0}
       onClick={() => navigate(`/network/${woman.id}`)}
       onKeyDown={(e) => e.key === "Enter" && navigate(`/network/${woman.id}`)}
-      className="nexa-card t-standard cursor-pointer rounded-[var(--radius-lg)] p-5 hover:shadow-[var(--shadow-md)]"
+      initial={{ opacity: 0, y: 18 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-40px" }}
+      transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+      whileHover={{ y: -6, boxShadow: "var(--shadow-lg)" }}
+      className="nexa-card cursor-pointer rounded-[var(--radius-lg)] p-5"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
@@ -39,6 +45,8 @@ export default function WomanCard({ woman, match }) {
         <VerifiedBadge />
         <span className="t-fast text-[12.5px] font-semibold" style={{ color: "var(--accent-strong)" }}>View profile →</span>
       </div>
-    </div>
+    </motion.div>
   );
 }
+
+

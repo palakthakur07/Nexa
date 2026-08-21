@@ -13,7 +13,7 @@ import HelpRequestModal from "../components/network/HelpRequestModal.jsx";
 import { Reveal } from "../lib/hooks.jsx";
 import { useProfile } from "../context/ProfileContext.jsx";
 import { useConnections } from "../context/ConnectionsContext.jsx";
-import { WOMEN } from "../data/women.js";
+import { useCatalog } from "../context/CatalogContext.jsx";
 import { calculateWomanMatchScore, getWomanMatchReasons } from "../lib/womanMatching.js";
 
 const CONVERSATION_STARTERS = [
@@ -28,10 +28,20 @@ export default function WomanDetail() {
   const navigate = useNavigate();
   const { profile } = useProfile();
   const { sendRequest, connectionStatusForWoman } = useConnections();
+  const { mentors, loading } = useCatalog();
   const [modalOpen, setModalOpen] = useState(false);
   const [starterDraft, setStarterDraft] = useState(null);
 
-  const woman = WOMEN.find((w) => w.id === id);
+  const woman = mentors.find((w) => w.id === id);
+
+  if (loading) {
+    return (
+      <div className="mx-auto flex min-h-[60vh] max-w-lg items-center justify-center px-6">
+        <div className="anim-spin-slow h-8 w-8 rounded-full" style={{ border: "3px solid var(--accent-soft)", borderTopColor: "var(--accent-strong)" }} />
+      </div>
+    );
+  }
+
   if (!woman) {
     return (
       <div className="mx-auto flex min-h-[60vh] max-w-lg flex-col items-center justify-center px-6 text-center">
@@ -114,7 +124,7 @@ export default function WomanDetail() {
           {starterDraft && (
             <div className="nexa-card mt-4 rounded-[var(--radius-md)] p-4">
               <textarea readOnly value={starterDraft} rows={2} className="w-full resize-none border-0 bg-transparent text-[13.5px] outline-none" />
-              <div className="mt-2 text-[11.5px]" style={{ color: "var(--text-tertiary)" }}>Demo only — full messaging arrives in a later phase.</div>
+              <div className="mt-2 text-[11.5px]" style={{ color: "var(--text-tertiary)" }}>Copy this to reach out — in-app messaging is coming soon.</div>
             </div>
           )}
         </Reveal>
@@ -124,3 +134,6 @@ export default function WomanDetail() {
     </div>
   );
 }
+
+
+

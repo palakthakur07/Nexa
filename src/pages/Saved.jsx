@@ -7,24 +7,25 @@ import DeadlineBadge from "../components/discover/DeadlineBadge.jsx";
 import { Reveal } from "../lib/hooks.jsx";
 import { useProfile } from "../context/ProfileContext.jsx";
 import { useSaved, APPLICATION_STATUSES } from "../context/SavedContext.jsx";
-import { OPPORTUNITIES } from "../data/opportunities.js";
+import { useCatalog } from "../context/CatalogContext.jsx";
 import { calculateMatchScore } from "../lib/matching.js";
 
 export default function Saved() {
   const { profile } = useProfile();
   const { saved, removeSaved, setStatus } = useSaved();
+  const { opportunities } = useCatalog();
   const navigate = useNavigate();
 
   const items = useMemo(() => {
     return Object.entries(saved)
       .map(([id, record]) => {
-        const opportunity = OPPORTUNITIES.find((o) => o.id === id);
+        const opportunity = opportunities.find((o) => o.id === id);
         if (!opportunity) return null;
         return { opportunity, record, match: calculateMatchScore(profile, opportunity) };
       })
       .filter(Boolean)
       .sort((a, b) => new Date(b.record.savedAt) - new Date(a.record.savedAt));
-  }, [saved, profile]);
+  }, [saved, profile, opportunities]);
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-14 md:px-10">
@@ -80,3 +81,5 @@ export default function Saved() {
     </div>
   );
 }
+
+

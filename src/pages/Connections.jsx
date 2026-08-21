@@ -5,7 +5,7 @@ import Button from "../components/ui/Button.jsx";
 import Avatar from "../components/ui/Avatar.jsx";
 import { Reveal } from "../lib/hooks.jsx";
 import { useConnections } from "../context/ConnectionsContext.jsx";
-import { WOMEN } from "../data/women.js";
+import { useCatalog } from "../context/CatalogContext.jsx";
 
 function timeAgo(iso) {
   const days = Math.floor((Date.now() - new Date(iso)) / 86400000);
@@ -16,6 +16,7 @@ function timeAgo(iso) {
 
 function ConnectionsList() {
   const { connections } = useConnections();
+  const { mentors } = useCatalog();
   const navigate = useNavigate();
   if (connections.length === 0) {
     return (
@@ -28,7 +29,7 @@ function ConnectionsList() {
   return (
     <div className="space-y-3">
       {connections.map((c) => {
-        const woman = c.womanId ? WOMEN.find((w) => w.id === c.womanId) : null;
+        const woman = c.womanId ? mentors.find((w) => w.id === c.womanId) : null;
         return (
           <div key={c.id} className="nexa-card flex items-center justify-between gap-3 rounded-[var(--radius-lg)] p-4">
             <div className="flex items-center gap-3">
@@ -48,6 +49,7 @@ function ConnectionsList() {
 
 function RequestsList() {
   const { sent, received, acceptReceived, declineReceived } = useConnections();
+  const { mentors } = useCatalog();
   const [tab, setTab] = useState("received");
   const list = tab === "received" ? received : sent;
 
@@ -66,7 +68,7 @@ function RequestsList() {
             <div key={r.id} className="nexa-card rounded-[var(--radius-lg)] p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <div className="text-[13.5px] font-semibold">{tab === "received" ? r.personName : WOMEN.find((w) => w.id === r.womanId)?.name || "Unknown"}</div>
+                  <div className="text-[13.5px] font-semibold">{tab === "received" ? r.personName : mentors.find((w) => w.id === r.womanId)?.name || "Mentor"}</div>
                   <div className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{r.topic} · {r.requestType}</div>
                   <p className="mt-1.5 text-[12.5px]" style={{ color: "var(--text-secondary)" }}>{r.message}</p>
                 </div>
@@ -90,7 +92,7 @@ export default function Connections() {
   return (
     <div className="mx-auto max-w-3xl px-6 py-14 md:px-10">
       <NavBackLink />
-      <Reveal><h1 className="font-display mt-4 text-[2.1rem]">My connections & requests</h1><p className="mt-1 text-[14px]" style={{ color: "var(--text-secondary)" }}>Everything here is stored locally for this demo.</p></Reveal>
+      <Reveal><h1 className="font-display mt-4 text-[2.1rem]">My connections & requests</h1><p className="mt-1 text-[14px]" style={{ color: "var(--text-secondary)" }}>Requests you send to mentors appear here, along with anyone you connect with.</p></Reveal>
 
       <Reveal delay={60} className="mt-8"><h2 className="font-display text-[1.3rem]">Connections</h2><div className="mt-4"><ConnectionsList /></div></Reveal>
       <Reveal delay={100} className="mt-10"><h2 className="font-display text-[1.3rem]">Requests</h2><div className="mt-4"><RequestsList /></div></Reveal>
@@ -102,3 +104,9 @@ function NavBackLink() {
   const navigate = useNavigate();
   return <button onClick={() => navigate("/network")} className="t-fast inline-flex items-center gap-1.5 text-[13px] font-semibold" style={{ color: "var(--text-secondary)" }}><ArrowLeft size={14} /> Back to Network</button>;
 }
+
+
+
+
+
+

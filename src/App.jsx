@@ -1,12 +1,22 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation, Navigate } from "react-router-dom";
+import { AnimatePresence } from "framer-motion";
+import { AuthProvider } from "./context/AuthContext.jsx";
+import { CatalogProvider } from "./context/CatalogContext.jsx";
 import { ProfileProvider } from "./context/ProfileContext.jsx";
 import { NexaDrawerProvider } from "./context/NexaDrawerContext.jsx";
 import { SavedProvider } from "./context/SavedContext.jsx";
 import { ConnectionsProvider } from "./context/ConnectionsContext.jsx";
 import { ConversationsProvider } from "./context/ConversationsContext.jsx";
+import ProtectedRoute from "./components/auth/ProtectedRoute.jsx";
+import PageTransition from "./components/motion/PageTransition.jsx";
 import NavBar from "./components/NavBar.jsx";
 import NexaDrawer from "./components/NexaDrawer.jsx";
 import Landing from "./pages/Landing.jsx";
+import Login from "./pages/Login.jsx";
+import Signup from "./pages/Signup.jsx";
+import ResetPassword from "./pages/ResetPassword.jsx";
+import UpdatePassword from "./pages/UpdatePassword.jsx";
+import AuthCallback from "./pages/AuthCallback.jsx";
 import Onboarding from "./pages/Onboarding.jsx";
 import Analysis from "./pages/Analysis.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
@@ -20,40 +30,70 @@ import Connections from "./pages/Connections.jsx";
 import Nexa from "./pages/Nexa.jsx";
 import PlaceholderRoute from "./pages/PlaceholderRoute.jsx";
 
-// Routes: / -> /onboarding -> /analysis -> /dashboard, plus /profile, the
-// Phase 3 /discover experience (/discover, /discover/:id, /saved), the
-// Phase 4 women network (/network, /network/:id, /network/connections),
-// the Phase 5 assistant (/nexa), and the remaining /roadmap placeholder.
-export default function App() {
+// Small helpers to keep the route table readable.
+const P = ({ children }) => <PageTransition>{children}</PageTransition>;
+const Guard = ({ children }) => (
+  <ProtectedRoute><PageTransition>{children}</PageTransition></ProtectedRoute>
+);
+
+function AnimatedRoutes() {
+  const location = useLocation();
   return (
-    <ProfileProvider>
-      <SavedProvider>
-        <ConnectionsProvider>
-          <ConversationsProvider>
-            <NexaDrawerProvider>
-              <div id="nexa-app" style={{ minHeight: "100%" }}>
-                <NavBar />
-                <Routes>
-                  <Route path="/" element={<Landing />} />
-                  <Route path="/onboarding" element={<Onboarding />} />
-                  <Route path="/analysis" element={<Analysis />} />
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/profile" element={<Profile />} />
-                  <Route path="/discover" element={<Discover />} />
-                  <Route path="/discover/:id" element={<OpportunityDetail />} />
-                  <Route path="/saved" element={<Saved />} />
-                  <Route path="/network" element={<Network />} />
-                  <Route path="/network/connections" element={<Connections />} />
-                  <Route path="/network/:id" element={<WomanDetail />} />
-                  <Route path="/nexa" element={<Nexa />} />
-                  <Route path="/roadmap" element={<PlaceholderRoute route="roadmap" />} />
-                </Routes>
-                <NexaDrawer />
-              </div>
-            </NexaDrawerProvider>
-          </ConversationsProvider>
-        </ConnectionsProvider>
-      </SavedProvider>
-    </ProfileProvider>
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
+        {/* Public */}
+        <Route path="/" element={<P><Landing /></P>} />
+        <Route path="/login" element={<P><Login /></P>} />
+        <Route path="/signup" element={<P><Signup /></P>} />
+        <Route path="/reset-password" element={<P><ResetPassword /></P>} />
+        <Route path="/auth/update-password" element={<P><UpdatePassword /></P>} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
+
+        {/* Onboarding is reachable right after signup */}
+        <Route path="/onboarding" element={<Guard><Onboarding /></Guard>} />
+        <Route path="/analysis" element={<Guard><Analysis /></Guard>} />
+
+        {/* Protected product */}
+        <Route path="/dashboard" element={<Guard><Dashboard /></Guard>} />
+        <Route path="/profile" element={<Guard><Profile /></Guard>} />
+        <Route path="/discover" element={<Guard><Discover /></Guard>} />
+        <Route path="/discover/:id" element={<Guard><OpportunityDetail /></Guard>} />
+        <Route path="/saved" element={<Guard><Saved /></Guard>} />
+        <Route path="/network" element={<Guard><Network /></Guard>} />
+        <Route path="/network/connections" element={<Guard><Connections /></Guard>} />
+        <Route path="/network/:id" element={<Guard><WomanDetail /></Guard>} />
+        <Route path="/nexa" element={<Guard><Nexa /></Guard>} />
+        <Route path="/roadmap" element={<Guard><PlaceholderRoute route="roadmap" /></Guard>} />
+
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </AnimatePresence>
   );
 }
+
+// Provider order: Auth is outermost (everything below reads the session),
+// then Catalog (public data), then the per-user data providers.
+export default function App() {
+  return (
+    <AuthProvider>
+      <CatalogProvider>
+        <ProfileProvider>
+          <SavedProvider>
+            <ConnectionsProvider>
+              <ConversationsProvider>
+                <NexaDrawerProvider>
+                  <div id="nexa-app" style={{ minHeight: "100%" }}>
+                    <NavBar />
+                    <AnimatedRoutes />
+                    <NexaDrawer />
+                  </div>
+                </NexaDrawerProvider>
+              </ConversationsProvider>
+            </ConnectionsProvider>
+          </SavedProvider>
+        </ProfileProvider>
+      </CatalogProvider>
+    </AuthProvider>
+  );
+}
+
