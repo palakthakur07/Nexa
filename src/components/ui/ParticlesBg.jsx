@@ -37,10 +37,10 @@ export default function ParticlesBg() {
         window.pJSDom.forEach((p) => p.pJS.fn.vendors.destroypJS());
         window.pJSDom = [];
       }
-      // Sparse, faint field behind the text column.
-      initInstance("nexa-particles-text", { number: 16, distance: 130, opacity: 0.22 });
-      // Denser, more visible field behind the laptop mockup.
-      initInstance("nexa-particles-laptop", { number: 80, distance: 150, opacity: 0.65 });
+      // Faint, minimal field behind the text column — just a whisper of texture.
+      initInstance("nexa-particles-text", { number: 7, distance: 110, opacity: 0.11 });
+      // Dense, lively field behind the laptop mockup — the visual anchor.
+      initInstance("nexa-particles-laptop", { number: 110, distance: 145, opacity: 0.75 });
     };
 
     let script = document.querySelector('script[data-nexa-particles]');
@@ -66,8 +66,8 @@ export default function ParticlesBg() {
 
   return (
     <div className="pointer-events-none absolute inset-0" aria-hidden="true">
-      <div id="nexa-particles-text" className="absolute inset-y-0 left-0" style={{ width: "42%" }} />
-      <div id="nexa-particles-laptop" className="absolute inset-y-0 right-0" style={{ width: "62%" }} />
+      <div id="nexa-particles-text" className="absolute inset-y-0 left-0" style={{ width: "30%" }} />
+      <div id="nexa-particles-laptop" className="absolute inset-y-0 right-0" style={{ left: "44%" }} />
     </div>
   );
 }

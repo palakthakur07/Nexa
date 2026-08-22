@@ -30,11 +30,18 @@ create table if not exists public.profiles (
   give_back            jsonb,
   custom_roadmap_items text[] default '{}',
   onboarding_complete  boolean default false,
+  -- Manually flipped to true via SQL for whoever curates the opportunities
+  -- catalog (see README note below) — there is no self-serve admin signup.
+  is_admin             boolean default false,
   created_at           timestamptz default now(),
   updated_at           timestamptz default now()
 );
 
 alter table public.profiles enable row level security;
+
+-- Safe to re-run on a database that already had this table (e.g. from an
+-- earlier version of this schema) — adds the column only if missing.
+alter table public.profiles add column if not exists is_admin boolean default false;
 
 drop policy if exists "profiles_select_own" on public.profiles;
 drop policy if exists "profiles_insert_own" on public.profiles;
@@ -42,6 +49,33 @@ drop policy if exists "profiles_update_own" on public.profiles;
 create policy "profiles_select_own" on public.profiles for select using (auth.uid() = id);
 create policy "profiles_insert_own" on public.profiles for insert with check (auth.uid() = id);
 create policy "profiles_update_own" on public.profiles for update using (auth.uid() = id);
+
+-- The update policy above only checks WHICH ROW you're touching, not which
+-- COLUMNS — without this trigger, any signed-in user could call the API
+-- directly and set is_admin=true on their own row. This silently reverts
+-- that one column unless the caller is already an admin.
+create or replace function public.protect_is_admin()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if new.is_admin is distinct from old.is_admin then
+    -- auth.uid() is NULL when this runs outside the client API (e.g. you,
+    -- running an UPDATE directly in the Supabase SQL Editor as the project
+    -- owner) — that's already a trusted context, so only block the change
+    -- when it's coming from an authenticated client request that isn't
+    -- already an admin. This is what stops a regular signed-in user from
+    -- self-promoting via a direct API call.
+    if auth.uid() is not null and not exists (select 1 from public.profiles where id = auth.uid() and is_admin = true) then
+      new.is_admin := old.is_admin;
+    end if;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists protect_is_admin_trigger on public.profiles;
+create trigger protect_is_admin_trigger
+  before update on public.profiles
+  for each row execute function public.protect_is_admin();
 
 -- Auto-create a profile row whenever a new auth user signs up.
 create or replace function public.handle_new_user()
@@ -87,6 +121,18 @@ create table if not exists public.opportunities (
 alter table public.opportunities enable row level security;
 drop policy if exists "opportunities_read_all" on public.opportunities;
 create policy "opportunities_read_all" on public.opportunities for select using (true);
+
+-- Only profiles with is_admin=true may add/edit/remove catalog listings.
+-- Regular signed-in users still only get the read policy above.
+drop policy if exists "opportunities_write_admin" on public.opportunities;
+create policy "opportunities_write_admin" on public.opportunities for insert
+  with check (exists (select 1 from public.profiles where id = auth.uid() and is_admin = true));
+drop policy if exists "opportunities_update_admin" on public.opportunities;
+create policy "opportunities_update_admin" on public.opportunities for update
+  using (exists (select 1 from public.profiles where id = auth.uid() and is_admin = true));
+drop policy if exists "opportunities_delete_admin" on public.opportunities;
+create policy "opportunities_delete_admin" on public.opportunities for delete
+  using (exists (select 1 from public.profiles where id = auth.uid() and is_admin = true));
 
 -- ============================================================================
 -- 3. MENTORS  (public "network" catalog — the women directory)

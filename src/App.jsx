@@ -8,6 +8,7 @@ import { SavedProvider } from "./context/SavedContext.jsx";
 import { ConnectionsProvider } from "./context/ConnectionsContext.jsx";
 import { ConversationsProvider } from "./context/ConversationsContext.jsx";
 import ProtectedRoute from "./components/auth/ProtectedRoute.jsx";
+import AdminRoute from "./components/auth/AdminRoute.jsx";
 import PageTransition from "./components/motion/PageTransition.jsx";
 import NavBar from "./components/NavBar.jsx";
 import NexaDrawer from "./components/NexaDrawer.jsx";
@@ -29,17 +30,21 @@ import WomanDetail from "./pages/WomanDetail.jsx";
 import Connections from "./pages/Connections.jsx";
 import Nexa from "./pages/Nexa.jsx";
 import PlaceholderRoute from "./pages/PlaceholderRoute.jsx";
+import AdminOpportunities from "./pages/AdminOpportunities.jsx";
 
 // Small helpers to keep the route table readable.
 const P = ({ children }) => <PageTransition>{children}</PageTransition>;
 const Guard = ({ children }) => (
   <ProtectedRoute><PageTransition>{children}</PageTransition></ProtectedRoute>
 );
+const AdminGuard = ({ children }) => (
+  <ProtectedRoute><AdminRoute><PageTransition>{children}</PageTransition></AdminRoute></ProtectedRoute>
+);
 
 function AnimatedRoutes() {
   const location = useLocation();
   return (
-    <AnimatePresence mode="wait">
+    <AnimatePresence initial={false}>
       <Routes location={location} key={location.pathname}>
         {/* Public */}
         <Route path="/" element={<P><Landing /></P>} />
@@ -64,6 +69,7 @@ function AnimatedRoutes() {
         <Route path="/network/:id" element={<Guard><WomanDetail /></Guard>} />
         <Route path="/nexa" element={<Guard><Nexa /></Guard>} />
         <Route path="/roadmap" element={<Guard><PlaceholderRoute route="roadmap" /></Guard>} />
+        <Route path="/admin/opportunities" element={<AdminGuard><AdminOpportunities /></AdminGuard>} />
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

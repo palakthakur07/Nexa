@@ -40,9 +40,58 @@
 #nexa-app .nexa-nav[data-scrolled="true"] { background: rgba(251,247,243,0.88); backdrop-filter: blur(10px); border-bottom-color: var(--border); box-shadow: var(--shadow-sm); }
 #nexa-app .nexa-nav-link { color: var(--text-secondary); }
 #nexa-app .nexa-nav-link:hover { color: var(--text-primary); }
-#nexa-app .pillar-tab { color: var(--text-tertiary); border-left: 2px solid var(--border); }
-#nexa-app .pillar-tab[data-active="true"] { color: var(--text-primary); border-left-color: var(--accent-strong); }
-#nexa-app .pillar-tab:hover { color: var(--text-primary); }
+#nexa-app .pillar-tab { color: var(--text-tertiary); background: transparent; border-left: 2px solid var(--border); }
+#nexa-app .pillar-tab:hover { color: var(--text-primary); background: var(--surface); }
+#nexa-app .pillar-tab[data-active="true"] { color: var(--text-primary); background: var(--surface); border-left-color: var(--accent-strong); box-shadow: var(--shadow-sm); }
+#nexa-app .pillar-tab-icon { background: var(--surface-muted-strong); color: var(--text-tertiary); }
+#nexa-app .pillar-tab[data-active="true"] .pillar-tab-icon, #nexa-app .pillar-tab:hover .pillar-tab-icon { background: var(--accent-soft); color: var(--accent-strong); }
+#nexa-app .pillar-cta svg { transition: transform var(--dur-fast) var(--ease-standard); }
+#nexa-app .pillar-cta:hover svg { transform: translateX(3px); }
+#nexa-app .hero-feature:hover .hero-feature-icon { transform: translateY(-2px) scale(1.06); box-shadow: var(--shadow-md); }
+#nexa-app .hero-feature-row { border-top: 1px solid var(--border); padding-top: 26px; }
+#nexa-app .hero-feature-divider { position: absolute; left: -1px; top: 4px; bottom: 4px; width: 1px; background: var(--border); }
+#nexa-app .hero-gradient-text { background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+#nexa-app .hero-cta-glow::before {
+  content: ""; position: absolute; inset: -3px; border-radius: 999px; z-index: -1;
+  background: linear-gradient(120deg, var(--accent-strong), var(--accent), var(--accent-strong));
+  opacity: 0.55; filter: blur(10px); animation: nexa-cta-pulse 2.8s ease-in-out infinite;
+}
+@keyframes nexa-cta-pulse { 0%,100% { opacity: 0.4; transform: scale(1); } 50% { opacity: 0.7; transform: scale(1.045); } }
+#nexa-app .hero-laptop-glow {
+  background:
+    radial-gradient(closest-side at 62% 40%, rgba(140,75,87,0.24), rgba(140,75,87,0) 70%),
+    radial-gradient(closest-side at 30% 75%, rgba(201,123,134,0.18), rgba(201,123,134,0) 70%);
+  transform: scale(1.35); animation: nexa-glow-breathe 5s ease-in-out infinite;
+}
+@keyframes nexa-glow-breathe { 0%,100% { opacity: 0.85; } 50% { opacity: 1; } }
+#nexa-app .hero-laptop-shadow {
+  position: absolute; left: 12%; right: 12%; bottom: -6%; height: 34px; border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(43,36,34,0.22), rgba(43,36,34,0) 75%);
+  animation: nexa-shadow-breathe 6s ease-in-out infinite;
+}
+@keyframes nexa-shadow-breathe { 0%,100% { opacity: 1; transform: scaleX(1); } 50% { opacity: 0.75; transform: scaleX(0.93); } }
+#nexa-app .nexa-pill { cursor: default; }
+#nexa-app .nexa-chat-panel { transform: rotate(-1.1deg); transition: transform 380ms var(--ease-spring), box-shadow 380ms var(--ease-standard); }
+#nexa-app .nexa-chat-panel:hover { transform: rotate(0deg) translateY(-2px); box-shadow: var(--shadow-lg); }
+#nexa-app .nexa-chat-glow {
+  background: radial-gradient(closest-side at 70% 20%, rgba(140,75,87,0.16), rgba(140,75,87,0) 70%);
+  animation: nexa-glow-breathe 5s ease-in-out infinite;
+}
+#nexa-app .nexa-stat-tile:hover { transform: translateY(-3px) !important; box-shadow: var(--shadow-sm); background: var(--accent-soft) !important; }
+#nexa-app .nexa-orb-glow {
+  background: radial-gradient(closest-side, rgba(140,75,87,0.22), rgba(140,75,87,0) 72%);
+  transform: scale(1.9); animation: nexa-glow-breathe 4.5s ease-in-out infinite;
+}
+#nexa-app .nexa-composer-glow {
+  border-radius: var(--radius-lg); opacity: 0; transition: opacity 320ms var(--ease-standard);
+  background: radial-gradient(120% 160% at 50% 0%, rgba(140,75,87,0.16), rgba(140,75,87,0) 70%);
+}
+#nexa-app .nexa-composer-wrap:focus-within .nexa-composer-glow { opacity: 1; }
+#nexa-app .nexa-pill:hover { animation-play-state: paused !important; transform: translateY(-3px) scale(1.045) !important; box-shadow: var(--shadow-lg) !important; }
+@keyframes nexa-fadeup { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+#nexa-app .anim-fadeup { animation: nexa-fadeup 380ms var(--ease-standard) both; }
+@keyframes nexa-popup { from { opacity: 0; transform: translateY(10px) scale(0.94); } to { opacity: 1; transform: translateY(0) scale(1); } }
+#nexa-app .anim-popup { animation: nexa-popup 420ms var(--ease-spring) both; }
 #nexa-app .chip { background: var(--surface); border: 1px solid var(--border); color: var(--text-secondary); }
 #nexa-app .chip:hover { border-color: var(--accent); color: var(--accent-strong); background: var(--accent-soft); }
 #nexa-app .chip[data-selected="true"] { background: var(--accent-strong); border-color: var(--accent-strong); color: #fff; }
@@ -51,8 +100,8 @@
 #nexa-app .select-card[data-selected="true"] { border-color: var(--accent-strong); background: var(--accent-soft); }
 #nexa-app .no-scrollbar::-webkit-scrollbar { display: none; }
 #nexa-app .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-#nexa-app .reveal { opacity: 0; transform: translateY(18px); transition: opacity 600ms var(--ease-standard), transform 600ms var(--ease-standard); }
-#nexa-app .reveal.in { opacity: 1; transform: translateY(0); }
+#nexa-app .reveal { opacity: 0; transform: translateY(30px) scale(0.975); transition: opacity 620ms var(--ease-standard), transform 620ms var(--ease-spring); }
+#nexa-app .reveal.in { opacity: 1; transform: translateY(0) scale(1); }
 @keyframes nexa-pulse-soft { 0%,100% { opacity:1; transform: scale(1);} 50% { opacity:0.85; transform: scale(1.04);} }
 @keyframes nexa-glow { 0%,100% { opacity:0.5;} 50% { opacity:1;} }
 @keyframes nexa-drawer-in { from { opacity:0; transform: translateY(24px) scale(0.98);} to { opacity:1; transform: translateY(0) scale(1);} }
@@ -73,7 +122,7 @@
 #nexa-app .screen-3d:hover .screen-3d-card, #nexa-app .screen-3d:focus-within .screen-3d-card { transform: translateZ(46px) scale(1.06); box-shadow: var(--shadow-lg); border-color: var(--border-strong); }
 #nexa-app .screen-chrome-dot { width: 6px; height: 6px; border-radius: 50%; }
 @media (prefers-reduced-motion: reduce) {
-  #nexa-app .screen-3d-float, #nexa-app .hero-idle, #nexa-app .anim-pulse, #nexa-app .anim-glow, #nexa-app .anim-spin-slow { animation: none !important; }
+  #nexa-app .screen-3d-float, #nexa-app .hero-idle, #nexa-app .anim-pulse, #nexa-app .anim-glow, #nexa-app .anim-spin-slow, #nexa-app .anim-fadeup, #nexa-app .anim-popup, #nexa-app .nexa-pill, #nexa-app .hero-laptop-glow, #nexa-app .hero-laptop-shadow, #nexa-app .hero-cta-glow::before, #nexa-app .nexa-chat-glow, #nexa-app .nexa-orb-glow { animation: none !important; opacity: 1 !important; transform: none !important; }
   #nexa-app .hero-camera { transition: none !important; }
   #nexa-app .reveal { transition: opacity 300ms linear; transform: none !important; }
 }

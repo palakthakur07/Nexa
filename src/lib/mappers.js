@@ -64,6 +64,7 @@ export function rowToProfile(r) {
     giveBack: r.give_back || null,
     customRoadmapItems: r.custom_roadmap_items || [],
     onboardingComplete: Boolean(r.onboarding_complete),
+    isAdmin: Boolean(r.is_admin),
   };
 }
 

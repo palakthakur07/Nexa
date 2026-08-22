@@ -63,6 +63,7 @@ export default function NavBar() {
         {navLink("/saved", "Saved", signedIn)}
         {navLink("/roadmap", "Roadmap", signedIn)}
         {navLink("/dashboard", "Dashboard", signedIn)}
+        {navLink("/admin/opportunities", "Admin", signedIn && profile.isAdmin)}
       </nav>
 
       <div className="flex items-center gap-3">
@@ -78,9 +79,10 @@ export default function NavBar() {
         )}
 
         {signedIn ? (
-          <button onClick={handleSignOut} aria-label="Sign out" title="Sign out" className="nexa-icon-btn t-fast flex h-9 w-9 items-center justify-center rounded-full" style={{ color: "var(--text-secondary)" }}>
-            <LogOut size={16} />
-          </button>
+          <button onClick={handleSignOut} aria-label="Sign out" title="Sign out" className="nexa-icon-btn t-fast flex h-9 items-center gap-1.5 rounded-full px-2" style={{ color: "var(--text-secondary)" }}>
+  <LogOut size={16} />
+  <span className="hidden text-[13px] font-medium sm:inline">Sign out</span>
+</button>
         ) : (
           <>
             <button onClick={() => navigate("/login")} className="nexa-nav-link t-fast hidden text-[13.5px] font-medium sm:block">Sign in</button>

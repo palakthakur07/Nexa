@@ -23,7 +23,7 @@ export default function Nexa() {
   const { profile, addRoadmapItem } = useProfile();
   const { saved, toggleSave } = useSaved();
   const { connections } = useConnections();
-  const { conversations, activeId, setActiveId, createConversation, addMessage, deleteConversation } = useConversations();
+  const { conversations, activeId, setActiveId, createConversation, addMessage, deleteConversation, renameConversation } = useConversations();
   const { opportunities, mentors } = useCatalog();
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -91,23 +91,27 @@ export default function Nexa() {
       case "VIEW_ROADMAP": navigate("/dashboard"); return null;
       case "SAVE_OPPORTUNITY": toggleSave(action.payload.id); return "Saved to your opportunities.";
       case "ADD_TO_ROADMAP": addRoadmapItem(action.payload.label); return "Added to your roadmap.";
-      case "RETRY": return null;
+      case "RETRY": {
+        const lastUser = [...(active?.messages || [])].reverse().find((m) => m.role === "user");
+        if (lastUser) send(lastUser.content);
+        return null;
+      }
       default: return null;
     }
-  }, [navigate, toggleSave, addRoadmapItem]);
+  }, [navigate, toggleSave, addRoadmapItem, active, send]);
 
   return (
     <div className="mx-auto flex max-w-6xl" style={{ height: "calc(100vh - 65px)" }}>
       {/* Desktop sidebar */}
       <div className="hidden w-64 shrink-0 lg:block" style={{ borderRight: "1px solid var(--border)" }}>
-        <ConversationSidebar conversations={conversations} activeId={activeId} onSelect={setActiveId} onNew={() => createConversation(null)} onDelete={deleteConversation} />
+        <ConversationSidebar conversations={conversations} activeId={activeId} onSelect={setActiveId} onNew={() => createConversation(null)} onDelete={deleteConversation} onRename={renameConversation} />
       </div>
 
       {/* Mobile sidebar drawer */}
       {sidebarOpen && (
         <div className="fixed inset-0 z-40 flex lg:hidden" onClick={() => setSidebarOpen(false)}>
           <div className="h-full w-72" style={{ background: "var(--bg)" }} onClick={(e) => e.stopPropagation()}>
-            <ConversationSidebar conversations={conversations} activeId={activeId} onSelect={(id) => { setActiveId(id); setSidebarOpen(false); }} onNew={() => { createConversation(null); setSidebarOpen(false); }} onDelete={deleteConversation} />
+            <ConversationSidebar conversations={conversations} activeId={activeId} onSelect={(id) => { setActiveId(id); setSidebarOpen(false); }} onNew={() => { createConversation(null); setSidebarOpen(false); }} onDelete={deleteConversation} onRename={renameConversation} />
           </div>
           <div className="flex-1 bg-black/20" />
         </div>

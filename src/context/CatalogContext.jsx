@@ -46,7 +46,17 @@ export function CatalogProvider({ children }) {
   }, []);
 
   const value = useMemo(
-    () => ({ opportunities, mentors, communities, loading, opportunityTypes: OPPORTUNITY_TYPES }),
+    () => ({
+      opportunities, mentors, communities, loading, opportunityTypes: OPPORTUNITY_TYPES,
+      // Admin writes go through dataService directly (see AdminOpportunities.jsx)
+      // and then call this so the rest of the app reflects the change without
+      // a full reload. Cheap no-op when Supabase isn't configured.
+      refreshOpportunities: async () => {
+        if (!isSupabaseConfigured()) return;
+        const opps = await fetchOpportunities();
+        setOpportunities(opps);
+      },
+    }),
     [opportunities, mentors, communities, loading]
   );
   return <CatalogContext.Provider value={value}>{children}</CatalogContext.Provider>;

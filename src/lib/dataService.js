@@ -23,6 +23,36 @@ export async function fetchOpportunity(id) {
   return all.find((o) => o.id === id) || null;
 }
 
+// ---------- admin catalog writes (RLS restricts these to is_admin rows) ----------
+export function opportunityToRow(o) {
+  return {
+    id: o.id, title: o.title, organization: o.organization, type: o.type,
+    description: o.description, location: o.location, remote: !!o.remote,
+    categories: o.categories || [], goals: o.goals || [], career_stages: o.careerStages || [],
+    skills: o.skills || [], funding: o.funding || { type: "", amount: null },
+    deadline: o.deadline, eligibility: o.eligibility || [], benefits: o.benefits || [],
+    application_url: o.applicationUrl || "#", source: o.source || "", verified: !!o.verified,
+  };
+}
+
+export async function createOpportunity(o) {
+  const { error } = await supabase.from("opportunities").insert(opportunityToRow(o));
+  if (error) throw error;
+  _opportunities = null; // force next fetch to hit the DB
+}
+
+export async function updateOpportunity(o) {
+  const { error } = await supabase.from("opportunities").update(opportunityToRow(o)).eq("id", o.id);
+  if (error) throw error;
+  _opportunities = null;
+}
+
+export async function deleteOpportunity(id) {
+  const { error } = await supabase.from("opportunities").delete().eq("id", id);
+  if (error) throw error;
+  _opportunities = null;
+}
+
 export async function fetchMentors() {
   if (_mentors) return _mentors;
   if (!isSupabaseConfigured()) return [];

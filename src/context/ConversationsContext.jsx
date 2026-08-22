@@ -94,9 +94,19 @@ export function ConversationsProvider({ children }) {
     }
   }, [user]);
 
+  const renameConversation = useCallback((id, title) => {
+    const clean = title.trim();
+    if (!clean) return;
+    setConversations((prev) => prev.map((c) => (c.id === id ? { ...c, title: clean, updatedAt: new Date().toISOString() } : c)));
+    if (isSupabaseConfigured() && user) {
+      supabase.from("conversations").update({ title: clean, updated_at: new Date().toISOString() }).eq("id", id)
+        .then(({ error }) => { if (error) console.error("renameConversation:", error.message); });
+    }
+  }, [user]);
+
   const value = useMemo(() => ({
-    conversations, activeId, setActiveId, createConversation, addMessage, deleteConversation,
-  }), [conversations, activeId, createConversation, addMessage, deleteConversation]);
+    conversations, activeId, setActiveId, createConversation, addMessage, deleteConversation, renameConversation,
+  }), [conversations, activeId, createConversation, addMessage, deleteConversation, renameConversation]);
 
   return <ConversationsContext.Provider value={value}>{children}</ConversationsContext.Provider>;
 }

@@ -1,0 +1,5 @@
+{
+  "//": "Scopes the Deno VS Code extension to only the Supabase Edge Functions folder. Without this, VS Code's default TypeScript service (which assumes Node) flags Deno globals and https:// URL imports in that folder as errors — they aren't; Deno provides them at runtime and Vite/npm never touches this folder at build time. The rest of the project (src/) keeps normal Node/TS IntelliSense untouched.",
+  "deno.enablePaths": ["supabase/functions"],
+  "deno.lint": true
+}
