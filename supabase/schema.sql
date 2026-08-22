@@ -116,6 +116,22 @@ drop policy if exists "mentors_read_all" on public.mentors;
 create policy "mentors_read_all" on public.mentors for select using (true);
 
 -- ============================================================================
+-- 3b. COMMUNITIES  (public catalog — suggested groups/orgs, was hardcoded
+--     client-side sample data before; now a real table like the two above)
+-- ============================================================================
+create table if not exists public.communities (
+  id          text primary key,
+  name        text not null,
+  category    text,
+  why         text,
+  created_at  timestamptz default now()
+);
+
+alter table public.communities enable row level security;
+drop policy if exists "communities_read_all" on public.communities;
+create policy "communities_read_all" on public.communities for select using (true);
+
+-- ============================================================================
 -- 4. SAVED OPPORTUNITIES  (per user)
 -- ============================================================================
 create table if not exists public.saved_opportunities (

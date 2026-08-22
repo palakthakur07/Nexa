@@ -1,6 +1,7 @@
 // Generates supabase/seed.sql from the existing mock data files.
 import { OPPORTUNITIES } from "../src/data/opportunities.js";
 import { WOMEN } from "../src/data/women.js";
+import { COMMUNITIES } from "../src/data/communities.js";
 import fs from "node:fs";
 
 const q = (s) => (s === null || s === undefined ? "null" : `'${String(s).replace(/'/g, "''")}'`);
@@ -33,8 +34,16 @@ sql += "  name=excluded.name, headline=excluded.headline, location=excluded.loca
 sql += "  journey=excluded.journey, journey_tags=excluded.journey_tags, relevant_goals=excluded.relevant_goals,\n";
 sql += "  experience=excluded.experience, skills=excluded.skills, can_help_with=excluded.can_help_with,\n";
 sql += "  willing_to_help_with=excluded.willing_to_help_with, languages=excluded.languages,\n";
-sql += "  availability=excluded.availability, verified=excluded.verified, experience_level=excluded.experience_level;\n";
+sql += "  availability=excluded.availability, verified=excluded.verified, experience_level=excluded.experience_level;\n\n";
+
+sql += "insert into public.communities\n";
+sql += "  (id,name,category,why) values\n";
+sql += COMMUNITIES.map((c) =>
+  `  (${q(c.id)},${q(c.name)},${q(c.category)},${q(c.why)})`
+).join(",\n");
+sql += "\non conflict (id) do update set\n";
+sql += "  name=excluded.name, category=excluded.category, why=excluded.why;\n";
 
 fs.writeFileSync(new URL("../supabase/seed.sql", import.meta.url), sql);
-console.log("Wrote supabase/seed.sql:", OPPORTUNITIES.length, "opportunities,", WOMEN.length, "mentors");
+console.log("Wrote supabase/seed.sql:", OPPORTUNITIES.length, "opportunities,", WOMEN.length, "mentors,", COMMUNITIES.length, "communities");
 

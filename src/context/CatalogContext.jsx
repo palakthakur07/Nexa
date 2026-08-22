@@ -1,18 +1,19 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { fetchOpportunities, fetchMentors } from "../lib/dataService.js";
+import { fetchOpportunities, fetchMentors, fetchCommunities } from "../lib/dataService.js";
 import { isSupabaseConfigured } from "../lib/supabaseClient.js";
 import { OPPORTUNITY_TYPES } from "../data/opportunities.js";
 
-// Single source of truth for the public catalogs (opportunities + mentors).
-// When Supabase is configured, data is real and comes from the database.
-// When it isn't, we fall back to the bundled sample arrays so the app is
-// still explorable offline — the seed script pushes those very rows into
-// Supabase, so the two never disagree.
+// Single source of truth for the public catalogs (opportunities, mentors,
+// communities). When Supabase is configured, data is real and comes from
+// the database. When it isn't, we fall back to the bundled sample arrays
+// so the app is still explorable offline — the seed script pushes those
+// very rows into Supabase, so the two never disagree.
 const CatalogContext = createContext(null);
 
 export function CatalogProvider({ children }) {
   const [opportunities, setOpportunities] = useState([]);
   const [mentors, setMentors] = useState([]);
+  const [communities, setCommunities] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -20,20 +21,23 @@ export function CatalogProvider({ children }) {
     async function load() {
       setLoading(true);
       if (isSupabaseConfigured()) {
-        const [opps, ms] = await Promise.all([fetchOpportunities(), fetchMentors()]);
+        const [opps, ms, cs] = await Promise.all([fetchOpportunities(), fetchMentors(), fetchCommunities()]);
         if (!alive) return;
         setOpportunities(opps);
         setMentors(ms);
+        setCommunities(cs);
       } else {
         // Offline fallback — dynamic import so these arrays aren't in the
         // critical bundle path when a real backend is configured.
-        const [{ OPPORTUNITIES }, { WOMEN }] = await Promise.all([
+        const [{ OPPORTUNITIES }, { WOMEN }, { COMMUNITIES }] = await Promise.all([
           import("../data/opportunities.js"),
           import("../data/women.js"),
+          import("../data/communities.js"),
         ]);
         if (!alive) return;
         setOpportunities(OPPORTUNITIES);
         setMentors(WOMEN);
+        setCommunities(COMMUNITIES);
       }
       setLoading(false);
     }
@@ -42,8 +46,8 @@ export function CatalogProvider({ children }) {
   }, []);
 
   const value = useMemo(
-    () => ({ opportunities, mentors, loading, opportunityTypes: OPPORTUNITY_TYPES }),
-    [opportunities, mentors, loading]
+    () => ({ opportunities, mentors, communities, loading, opportunityTypes: OPPORTUNITY_TYPES }),
+    [opportunities, mentors, communities, loading]
   );
   return <CatalogContext.Provider value={value}>{children}</CatalogContext.Provider>;
 }

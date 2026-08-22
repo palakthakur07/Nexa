@@ -2,6 +2,10 @@
 // the app already expects (opportunities.js / women.js schemas), so no UI
 // component had to change its property names when data moved to the backend.
 
+export function rowToCommunity(r) {
+  return { id: r.id, name: r.name, category: r.category, why: r.why };
+}
+
 export function rowToOpportunity(r) {
   return {
     id: r.id,

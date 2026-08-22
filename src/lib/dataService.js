@@ -3,10 +3,11 @@
 // data (opportunities, mentors) is fetched from Supabase and cached in
 // module memory for the session.
 import { supabase, isSupabaseConfigured } from "./supabaseClient.js";
-import { rowToOpportunity, rowToWoman } from "./mappers.js";
+import { rowToOpportunity, rowToWoman, rowToCommunity } from "./mappers.js";
 
 let _opportunities = null;
 let _mentors = null;
+let _communities = null;
 
 export async function fetchOpportunities() {
   if (_opportunities) return _opportunities;
@@ -34,6 +35,15 @@ export async function fetchMentors() {
 export async function fetchMentor(id) {
   const all = await fetchMentors();
   return all.find((m) => m.id === id) || null;
+}
+
+export async function fetchCommunities() {
+  if (_communities) return _communities;
+  if (!isSupabaseConfigured()) return [];
+  const { data, error } = await supabase.from("communities").select("*").order("name", { ascending: true });
+  if (error) { console.error("fetchCommunities:", error.message); return []; }
+  _communities = data.map(rowToCommunity);
+  return _communities;
 }
 
 // ---------- saved opportunities ----------

@@ -9,14 +9,13 @@ import DashboardSection from "../components/dashboard/DashboardSection.jsx";
 import { Reveal } from "../lib/hooks.jsx";
 import { useProfile } from "../context/ProfileContext.jsx";
 import { useCatalog } from "../context/CatalogContext.jsx";
-import { COMMUNITIES } from "../data/communities.js";
 import { calculateMatchScore } from "../lib/matching.js";
 import { calculateWomanMatchScore } from "../lib/womanMatching.js";
 import { getNextMove, generateRoadmap } from "../lib/scoring.js";
 
 export default function Dashboard() {
   const { profile } = useProfile();
-  const { opportunities, mentors } = useCatalog();
+  const { opportunities, mentors, communities } = useCatalog();
   const navigate = useNavigate();
 
   // Same data + same matching engine as /discover (lib/matching.js), so
@@ -92,7 +91,7 @@ export default function Dashboard() {
         <Reveal delay={80}>
           <div className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--accent-strong)" }}>Communities</div>
           <div className="nexa-card mt-3 space-y-2.5 rounded-[var(--radius-lg)] p-5">
-            {COMMUNITIES.slice(0, 3).map((c) => (
+            {communities.slice(0, 3).map((c) => (
               <div key={c.id} className="flex items-center justify-between">
                 <div><div className="text-[13px] font-semibold">{c.name}</div><div className="text-[11.5px]" style={{ color: "var(--text-secondary)" }}>{c.category}</div></div>
                 <ArrowUpRight size={14} style={{ color: "var(--text-tertiary)" }} />

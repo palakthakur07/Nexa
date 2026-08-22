@@ -51,3 +51,12 @@ on conflict (id) do update set
   experience=excluded.experience, skills=excluded.skills, can_help_with=excluded.can_help_with,
   willing_to_help_with=excluded.willing_to_help_with, languages=excluded.languages,
   availability=excluded.availability, verified=excluded.verified, experience_level=excluded.experience_level;
+
+insert into public.communities
+  (id,name,category,why) values
+  ('c1','Women in AI','Technology','Active peer group for women working in or studying AI.'),
+  ('c2','Women Founders','Entrepreneurship','Founders sharing funding leads and early-stage advice.'),
+  ('c3','Global STEM Network','Research','International community for women in research and academia.'),
+  ('c4','Women in Leadership','Career growth','Focused on career progression into senior roles.')
+on conflict (id) do update set
+  name=excluded.name, category=excluded.category, why=excluded.why;
