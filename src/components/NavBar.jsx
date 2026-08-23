@@ -6,10 +6,12 @@ import Button from "./ui/Button.jsx";
 import Avatar from "./ui/Avatar.jsx";
 import { useProfile } from "../context/ProfileContext.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
+import { useOrganization } from "../context/OrganizationContext.jsx";
 
 export default function NavBar() {
   const { profile } = useProfile();
   const { isAuthenticated, configured, signOut } = useAuth();
+  const { organization } = useOrganization();
   const navigate = useNavigate();
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
@@ -63,6 +65,7 @@ export default function NavBar() {
         {navLink("/saved", "Saved", signedIn)}
         {navLink("/roadmap", "Roadmap", signedIn)}
         {navLink("/dashboard", "Dashboard", signedIn)}
+        {navLink(organization ? "/org/dashboard" : "/org/signup", organization ? "Org dashboard" : "For organizations", signedIn)}
         {navLink("/admin/opportunities", "Admin", signedIn && profile.isAdmin)}
       </nav>
 

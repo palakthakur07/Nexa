@@ -110,7 +110,17 @@ export default function Discover() {
         </div>
       </Reveal>
 
-      {rest.length === 0 ? (
+      {opportunities.length === 0 ? (
+        <Reveal>
+          <div className="nexa-card flex flex-col items-center gap-3 rounded-[var(--radius-lg)] p-10 text-center">
+            <Compass size={22} style={{ color: "var(--text-tertiary)" }} />
+            <div className="text-[15px] font-semibold">We're building your opportunity feed.</div>
+            <p className="max-w-md text-[13.5px]" style={{ color: "var(--text-secondary)" }}>
+              NEXA is continuously discovering opportunities from trusted sources, and organizations are adding their own listings directly. Check back soon, or tell Nexa what you're looking for.
+            </p>
+          </div>
+        </Reveal>
+      ) : rest.length === 0 ? (
         <Reveal>
           <div className="nexa-card flex flex-col items-center gap-3 rounded-[var(--radius-lg)] p-10 text-center">
             <Compass size={22} style={{ color: "var(--text-tertiary)" }} />

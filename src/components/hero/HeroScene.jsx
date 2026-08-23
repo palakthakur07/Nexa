@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { Sparkles, Compass, Map, TrendingUp } from "lucide-react";
 import Button from "../ui/Button.jsx";
 import Badge from "../ui/Badge.jsx";
-import MacbookPro from "../ui/MacbookPro.jsx";
+import LaptopFrame from "../ui/LaptopFrame.jsx";
 import ParticlesBg from "../ui/ParticlesBg.jsx";
 import NexaScreenPreview from "./NexaScreenPreview.jsx";
 import { Reveal, useCameraParallax } from "../../lib/hooks.jsx";
@@ -10,8 +10,9 @@ import { Reveal, useCameraParallax } from "../../lib/hooks.jsx";
 // Laptop-mockup hero — a deliberate direction change from the earlier
 // floating-3D-screens composition (see FloatingScreen.jsx / screens.config.jsx,
 // now removed). Screen content is real NEXA UI rendered as an HTML overlay
-// (NexaScreenPreview), not a stock photo, positioned with percentages
-// matched to MacbookPro's screen cutout so it stays aligned at any size.
+// (NexaScreenPreview), not a stock photo, inside a hand-built laptop chrome
+// (LaptopFrame) themed to the brand's own graphite/accent palette rather
+// than a generic gray-plastic stock SVG.
 const FEATURES = [
   { icon: Compass, title: "Personalized Opportunities", desc: "Matched to your goals, skills & interests." },
   { icon: Map, title: "Guided Roadmap", desc: "A step-by-step plan built just for you." },
@@ -88,10 +89,9 @@ export default function HeroScene() {
             <div aria-hidden="true" className="hero-laptop-glow pointer-events-none absolute inset-0" />
             <div className="hero-idle relative">
               <div ref={cameraRef} className="hero-camera relative">
-                <MacbookPro style={{ color: "var(--surface)", width: "100%", height: "auto" }} />
-                <div className="absolute overflow-hidden rounded-[3px]" style={{ left: "11.47%", top: "5.33%", width: "77.11%", height: "80.96%" }}>
+                <LaptopFrame>
                   <NexaScreenPreview />
-                </div>
+                </LaptopFrame>
               </div>
             </div>
             <div aria-hidden="true" className="hero-laptop-shadow" />

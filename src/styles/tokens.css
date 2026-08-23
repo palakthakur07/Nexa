@@ -121,6 +121,33 @@
 #nexa-app .screen-3d:hover .screen-3d-float { animation-play-state: paused; }
 #nexa-app .screen-3d:hover .screen-3d-card, #nexa-app .screen-3d:focus-within .screen-3d-card { transform: translateZ(46px) scale(1.06); box-shadow: var(--shadow-lg); border-color: var(--border-strong); }
 #nexa-app .screen-chrome-dot { width: 6px; height: 6px; border-radius: 50%; }
+
+/* ---------- Laptop frame (replaces the stock MacbookPro clipart) ---------- */
+#nexa-app .nexa-laptop { width: 100%; }
+#nexa-app .nexa-laptop-lid {
+  position: relative; width: 100%; aspect-ratio: 1180 / 760; border-radius: 18px 18px 6px 6px;
+  padding: 14px 14px 20px; box-sizing: border-box;
+  background: linear-gradient(155deg, #2c2726 0%, #1a1716 55%, #100e0d 100%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), inset 0 0 0 1px rgba(0,0,0,0.5), 0 30px 60px -20px rgba(30,18,16,0.45);
+}
+#nexa-app .nexa-laptop-camera {
+  position: absolute; left: 50%; top: 6px; width: 5px; height: 5px; border-radius: 50%;
+  transform: translateX(-50%); background: #050505; box-shadow: 0 0 0 2.5px rgba(255,255,255,0.03), 0 0 4px rgba(140,75,87,0.5);
+}
+#nexa-app .nexa-laptop-screen {
+  position: relative; width: 100%; height: 100%; border-radius: 6px; overflow: hidden;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.6);
+}
+#nexa-app .nexa-laptop-base {
+  position: relative; height: 16px; margin: 0 -3%;
+  background: linear-gradient(180deg, #3a3432 0%, #211d1c 55%, #171413 100%);
+  border-radius: 0 0 10px 10px; box-shadow: 0 1px 0 rgba(255,255,255,0.06) inset, 0 14px 22px -12px rgba(20,12,11,0.5);
+}
+#nexa-app .nexa-laptop-hinge { position: absolute; inset: 0 auto 0 0; width: 100%; height: 3px; background: rgba(0,0,0,0.35); }
+#nexa-app .nexa-laptop-notch {
+  position: absolute; left: 50%; top: 0; width: 13%; height: 5px; transform: translateX(-50%);
+  background: #171413; border-radius: 0 0 8px 8px; box-shadow: inset 0 -1px 2px rgba(0,0,0,0.5);
+}
 @media (prefers-reduced-motion: reduce) {
   #nexa-app .screen-3d-float, #nexa-app .hero-idle, #nexa-app .anim-pulse, #nexa-app .anim-glow, #nexa-app .anim-spin-slow, #nexa-app .anim-fadeup, #nexa-app .anim-popup, #nexa-app .nexa-pill, #nexa-app .hero-laptop-glow, #nexa-app .hero-laptop-shadow, #nexa-app .hero-cta-glow::before, #nexa-app .nexa-chat-glow, #nexa-app .nexa-orb-glow { animation: none !important; opacity: 1 !important; transform: none !important; }
   #nexa-app .hero-camera { transition: none !important; }

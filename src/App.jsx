@@ -7,6 +7,7 @@ import { NexaDrawerProvider } from "./context/NexaDrawerContext.jsx";
 import { SavedProvider } from "./context/SavedContext.jsx";
 import { ConnectionsProvider } from "./context/ConnectionsContext.jsx";
 import { ConversationsProvider } from "./context/ConversationsContext.jsx";
+import { OrganizationProvider } from "./context/OrganizationContext.jsx";
 import ProtectedRoute from "./components/auth/ProtectedRoute.jsx";
 import AdminRoute from "./components/auth/AdminRoute.jsx";
 import PageTransition from "./components/motion/PageTransition.jsx";
@@ -31,6 +32,10 @@ import Connections from "./pages/Connections.jsx";
 import Nexa from "./pages/Nexa.jsx";
 import PlaceholderRoute from "./pages/PlaceholderRoute.jsx";
 import AdminOpportunities from "./pages/AdminOpportunities.jsx";
+import AdminOrganizations from "./pages/AdminOrganizations.jsx";
+import AdminSources from "./pages/AdminSources.jsx";
+import OrgSignup from "./pages/OrgSignup.jsx";
+import OrgDashboard from "./pages/OrgDashboard.jsx";
 
 // Small helpers to keep the route table readable.
 const P = ({ children }) => <PageTransition>{children}</PageTransition>;
@@ -69,7 +74,14 @@ function AnimatedRoutes() {
         <Route path="/network/:id" element={<Guard><WomanDetail /></Guard>} />
         <Route path="/nexa" element={<Guard><Nexa /></Guard>} />
         <Route path="/roadmap" element={<Guard><PlaceholderRoute route="roadmap" /></Guard>} />
+
+        {/* Organizations — real-org accounts that submit/manage their own listings */}
+        <Route path="/org/signup" element={<Guard><OrgSignup /></Guard>} />
+        <Route path="/org/dashboard" element={<Guard><OrgDashboard /></Guard>} />
+
         <Route path="/admin/opportunities" element={<AdminGuard><AdminOpportunities /></AdminGuard>} />
+        <Route path="/admin/organizations" element={<AdminGuard><AdminOrganizations /></AdminGuard>} />
+        <Route path="/admin/sources" element={<AdminGuard><AdminSources /></AdminGuard>} />
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
@@ -84,19 +96,21 @@ export default function App() {
     <AuthProvider>
       <CatalogProvider>
         <ProfileProvider>
-          <SavedProvider>
-            <ConnectionsProvider>
-              <ConversationsProvider>
-                <NexaDrawerProvider>
-                  <div id="nexa-app" style={{ minHeight: "100%" }}>
-                    <NavBar />
-                    <AnimatedRoutes />
-                    <NexaDrawer />
-                  </div>
-                </NexaDrawerProvider>
-              </ConversationsProvider>
-            </ConnectionsProvider>
-          </SavedProvider>
+          <OrganizationProvider>
+            <SavedProvider>
+              <ConnectionsProvider>
+                <ConversationsProvider>
+                  <NexaDrawerProvider>
+                    <div id="nexa-app" style={{ minHeight: "100%" }}>
+                      <NavBar />
+                      <AnimatedRoutes />
+                      <NexaDrawer />
+                    </div>
+                  </NexaDrawerProvider>
+                </ConversationsProvider>
+              </ConnectionsProvider>
+            </SavedProvider>
+          </OrganizationProvider>
         </ProfileProvider>
       </CatalogProvider>
     </AuthProvider>

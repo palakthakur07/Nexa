@@ -10,7 +10,11 @@ import { getNextMove, generateRoadmap } from "./scoring.js";
 // CatalogContext, or the offline sample data). Passing them in keeps this
 // module free of any direct data-source import.
 export function buildNexaContext({ profile, saved, connections, entryContext, opportunities = [], women = [] }) {
-  const OPPORTUNITIES = opportunities;
+  // Nexa AI must never surface a listing that isn't actually published —
+  // the array passed in can include an admin's or org's own pending/draft
+  // rows (RLS lets an owner see their own non-published rows), so filter to
+  // what's actually real to the end user before any matching happens.
+  const OPPORTUNITIES = opportunities.filter((o) => !o.verificationStatus || o.verificationStatus === "PUBLISHED" || o.verified);
   const WOMEN = women;
   const savedOpportunities = Object.entries(saved || {}).map(([id, record]) => {
     const opportunity = OPPORTUNITIES.find((o) => o.id === id);
@@ -56,6 +60,7 @@ export function buildNexaContext({ profile, saved, connections, entryContext, op
     currentWoman,
     savedOpportunities,
     topOpportunities,
+    hasPublishedOpportunities: OPPORTUNITIES.length > 0,
     roadmap,
     nextMove,
     recommendedWomen,

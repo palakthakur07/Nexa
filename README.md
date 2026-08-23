@@ -49,10 +49,15 @@ npm install
 2. Paste the entire contents of [`supabase/schema.sql`](supabase/schema.sql) and click **Run**.
    - This creates all tables, Row Level Security policies, and the trigger that
      auto-creates a profile row on signup.
-3. Open another **New query**, paste [`supabase/seed.sql`](supabase/seed.sql), and **Run**.
-   - This loads the opportunities and mentors catalogs.
+3. Open another **New query**, paste [`supabase/seed-demo.sql`](supabase/seed-demo.sql), and **Run** — **only in a local/dev project.**
+   - This loads fabricated sample opportunities/mentors so a fresh install has
+     something to click through. **Do not run this against production** — see
+     "Opportunity Engine → Phase 1" below for how real opportunities get in.
+4. Open another **New query**, paste [`supabase/migrations/002_opportunity_engine.sql`](supabase/migrations/002_opportunity_engine.sql), and **Run**.
+   - This adds the verification workflow, organizations, source registry, and
+     notifications tables described below. Safe to re-run.
 
-> Both files are safe to re-run — they use `create ... if not exists` and
+> All three files are safe to re-run — they use `create ... if not exists` and
 > `on conflict ... do update` (idempotent upserts).
 
 ### 4. Enable authentication providers
@@ -112,7 +117,10 @@ npm run preview   # serves the production build locally
 ```
 supabase/
   schema.sql                     — tables + RLS + signup trigger (run first)
-  seed.sql                       — opportunities + mentors catalog (run second)
+  seed-demo.sql                  — DEV-ONLY fabricated sample catalog (never run in production)
+  migrations/002_opportunity_engine.sql — verification workflow, organizations,
+                                    source registry, notifications (run after schema.sql)
+  functions/ingest-opportunities/ — Phase 2 ingestion pipeline (Edge Function, opt-in)
 
 src/
   lib/
@@ -123,7 +131,8 @@ src/
 
   context/
     AuthContext.jsx              — session, sign up/in/out, Google, reset, verify
-    CatalogContext.jsx           — opportunities + mentors from Supabase (or fallback)
+    CatalogContext.jsx           — published opportunities + mentors (RLS-scoped)
+    OrganizationContext.jsx      — signed-in user's organization account + own listings
     ProfileContext.jsx           — per-user profile row (Supabase-backed)
     SavedContext.jsx             — per-user saved opportunities
     ConnectionsContext.jsx       — per-user connection requests
@@ -154,6 +163,8 @@ src/
 | `/discover`, `/discover/:id`, `/saved` | protected | Opportunities |
 | `/network`, `/network/:id`, `/network/connections` | protected | Mentor network |
 | `/nexa` | protected | AI assistant |
+| `/org/signup`, `/org/dashboard` | protected | Organization account + listing management |
+| `/admin/opportunities`, `/admin/organizations`, `/admin/sources` | admin only | Catalog, org verification, ingestion registry |
 
 ---
 
@@ -162,7 +173,11 @@ src/
 | Table | Holds | Access |
 |---|---|---|
 | `profiles` | onboarding answers, roadmap, per user | own row only (RLS) |
-| `opportunities` | public catalog | read-only to all |
+| `opportunities` | catalog, admin-curated + org-submitted + ingested | published rows readable by all; drafts/pending readable only by their owner/admin |
+| `organizations` | real-org accounts that submit/manage listings | readable by all; writable by owner/admin |
+| `opportunity_sources` | Phase 2 ingestion registry | admin only |
+| `opportunity_ingestion_log` | ingestion run history | admin only (read) |
+| `notifications` / `notification_preferences` | per-user alerts (foundation, no writer job yet) | own rows only |
 | `mentors` | public mentor directory | read-only to all |
 | `saved_opportunities` | saved items + status, per user | own rows only |
 | `connection_requests` | mentorship requests sent, per user | own rows only |
@@ -170,6 +185,102 @@ src/
 
 A profile row is created automatically on signup by a Postgres trigger
 (`handle_new_user`), so `profiles` always stays in sync with `auth.users`.
+
+---
+
+## Opportunity Engine
+
+This is the real, database-backed system behind the opportunities catalog —
+not a mock. There is no fabricated data in the production path: a fresh
+production database starts with **zero** opportunities, and the UI ("We're
+building your opportunity feed") is designed to look good that way.
+
+### Phase 1 — curation
+
+Admins add real opportunities at `/admin/opportunities`. Every listing has a
+`verificationStatus` (`DRAFT → PENDING_REVIEW → VERIFIED/PUBLISHED`, or
+`REJECTED`/`EXPIRED`) and provenance fields (`sourceType`, `sourceName`,
+`sourceUrl`, `submittedBy`, `verifiedBy`, `lastVerifiedAt`). Admin-authored
+listings publish immediately (an admin is the trust anchor); everything else
+goes through review. **None of this is enforced only in the UI** — a Postgres
+trigger (`protect_opportunity_verification` in
+`002_opportunity_engine.sql`) silently downgrades any non-admin attempt to
+set `VERIFIED`/`PUBLISHED` back to `PENDING_REVIEW`, so the rule holds even
+if someone calls the API directly.
+
+### Phase 2 — automated ingestion
+
+`supabase/functions/ingest-opportunities/` is a real, deployable pipeline —
+fetch → normalize → validate → dedupe → store as `PENDING_REVIEW`. It never
+auto-publishes. What's actually implemented:
+
+- **A source registry** (`/admin/sources`) — add a source's name, feed/API
+  URL, type, and trust level. Nothing runs until you add a source *and*
+  enable it.
+- **One real adapter: RSS/Atom** (`adapters/rss.ts`). RSS is the one
+  ingestion method that's generically safe to ship — a feed is content its
+  publisher built for syndication, unlike scraping an arbitrary page. It
+  extracts only what RSS standardizes (title, link, summary) and leaves
+  deadline/funding/eligibility `null` — most feeds don't carry that as
+  structured data, and this pipeline does not invent it.
+- **Deduplication** (`dedupe.ts`) by normalized application URL, falling back
+  to normalized (organization, title).
+- **Source health tracking** — `last_checked_at`, `last_success_at`,
+  `last_error`, and a run log, visible at `/admin/sources`.
+
+**What you still have to do** (real-world constraint, not a UI mockup gap):
+1. `supabase functions deploy ingest-opportunities --no-verify-jwt`
+2. `supabase secrets set INGEST_SHARED_SECRET=<a random string>`
+3. Add a schedule that POSTs to the function's URL with
+   `Authorization: Bearer <that secret>` — either Supabase Dashboard →
+   Edge Functions → Cron, or `pg_cron` + `pg_net` from the SQL editor.
+4. Find and vet real sources yourself (check each one's robots.txt/ToS —
+   the "method notes" field on each source in `/admin/sources` is where you
+   record that you did), then add their real feed URLs.
+
+There's no universal "get me all scholarships" API — the architecture
+supports adding `API`/`DATASET` adapters later (implement the `Adapter`
+interface in `adapters/types.ts`), but a generic HTML `WEB` scraper is
+deliberately not included, since respecting a given site's terms is a
+per-source decision, not something a generic scraper can do for you.
+
+### Phase 3 & 4 — organizations
+
+A real organization creates an account at `/org/signup`
+(`organizations` table, `owner_id` = their `auth.users` row). New
+organizations start `UNVERIFIED`. They can submit opportunities immediately
+from `/org/dashboard` — every submission lands as `PENDING_REVIEW`
+regardless of the organization's own verification status (enforced by the
+`protect_opportunity_insert` trigger, not just the UI). An admin verifies
+organizations at `/admin/organizations`; a verified organization still goes
+through per-listing review — verification affects trust display, not
+publishing rights. RLS (`opportunities_update_org_owner`,
+`opportunities_insert_org_owner`) guarantees org A can never read or write
+org B's listings.
+
+### Phase 5 — matching & Nexa AI
+
+The match engine (`src/lib/matching.js`) is deterministic — not AI, no
+hallucination risk — and already existed in this codebase; it scores
+category/goal/career-stage/skill overlap and explains its reasoning
+(`src/lib/scoring.js`). `OpportunityCard`/`OpportunityDetail` show the score
+and the "why" breakdown.
+
+Nexa AI (`supabase/functions/nexa-chat`) is grounded in the **real,
+published** catalog: `buildNexaContext()` (`src/lib/nexaContext.js`) now
+filters to `verificationStatus === "PUBLISHED"` before anything is scored or
+handed to the model, so an admin's or org's own unpublished drafts can never
+leak into a recommendation. The system prompt
+(`src/lib/nexaSystemPrompt.js`) explicitly forbids inventing a listing and
+requires the literal fallback — *"I couldn't find a verified opportunity
+matching those criteria right now."* — whenever nothing genuinely fits.
+
+Notifications (`notifications` / `notification_preferences` tables) and
+saved-opportunity status tracking (`SavedContext.jsx`, pre-existing) are the
+foundation for "new match" / "deadline approaching" alerts — the tables and
+RLS are in place; there's no scheduled job yet that actually writes rows
+into `notifications` (that job would live alongside `ingest-opportunities`
+as a second scheduled Edge Function; not built in this pass).
 
 ---
 
@@ -184,6 +295,8 @@ A profile row is created automatically on signup by a Postgres trigger
 - The NEXA assistant defaults to its deterministic demo mode; wire a real
   provider via the optional `VITE_NEXA_AI_*` vars (see `.env.example`) — but
   only through your own backend proxy in production.
-- To regenerate `supabase/seed.sql` from the bundled sample arrays:
-  `node scripts/.gen-seed.mjs`
+- To regenerate `supabase/seed-demo.sql` from the bundled sample arrays:
+  `node scripts/gen-seed.mjs`
+- See "Opportunity Engine" above for Phases 1-5: verification workflow,
+  organizations, ingestion, and Nexa AI grounding.
 

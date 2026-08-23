@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, ExternalLink, Check, Sparkles } from "lucide-react";
 import Button from "../components/ui/Button.jsx";
 import Badge from "../components/ui/Badge.jsx";
+import { OpportunityVerificationBadge } from "../components/ui/VerificationBadge.jsx";
 import MatchScore from "../components/discover/MatchScore.jsx";
 import MatchBreakdown from "../components/discover/MatchBreakdown.jsx";
 import DeadlineBadge from "../components/discover/DeadlineBadge.jsx";
@@ -69,7 +70,7 @@ export default function OpportunityDetail() {
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--text-tertiary)" }}>{opportunity.type}</span>
-              {opportunity.verified && <Badge tone="success">Verified</Badge>}
+              <OpportunityVerificationBadge status={opportunity.verificationStatus} />
             </div>
             <h1 className="font-display mt-2 text-[2.1rem] leading-tight md:text-[2.4rem]">{opportunity.title}</h1>
             <div className="mt-1 text-[14px]" style={{ color: "var(--text-secondary)" }}>{opportunity.organization} · {opportunity.location}</div>
@@ -141,6 +142,26 @@ export default function OpportunityDetail() {
           <span className="text-[13.5px] font-semibold" style={{ color: "var(--text-primary)" }}>{formatDeadline(opportunity.deadline)} · {status.label}</span>
         </div>
       </Reveal>
+
+      {(opportunity.sourceName || opportunity.sourceUrl || opportunity.lastVerifiedAt) && (
+        <Reveal delay={320} className="mt-10">
+          <h2 className="font-display text-[1.4rem]">Source & provenance</h2>
+          <div className="nexa-card mt-3 space-y-1.5 rounded-[var(--radius-md)] p-4 text-[13px]" style={{ color: "var(--text-secondary)" }}>
+            {opportunity.sourceName && <div>Source: <span style={{ color: "var(--text-primary)" }}>{opportunity.sourceName}</span></div>}
+            {opportunity.sourceUrl && (
+              <div>
+                Original listing:{" "}
+                <a href={opportunity.sourceUrl} target="_blank" rel="noreferrer" className="underline" style={{ color: "var(--accent-strong)" }}>
+                  {opportunity.sourceUrl}
+                </a>
+              </div>
+            )}
+            {opportunity.lastVerifiedAt && (
+              <div>Last verified: <span style={{ color: "var(--text-primary)" }}>{new Date(opportunity.lastVerifiedAt).toLocaleDateString()}</span></div>
+            )}
+          </div>
+        </Reveal>
+      )}
 
       <Reveal delay={340} className="mt-10">
         <h2 className="font-display text-[1.4rem]">How to apply</h2>

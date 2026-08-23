@@ -26,6 +26,96 @@ export function rowToOpportunity(r) {
     applicationUrl: r.application_url || "#",
     source: r.source,
     verified: r.verified,
+    // ---- provenance + verification workflow (002_opportunity_engine.sql) ----
+    organizationId: r.organization_id || null,
+    submittedBy: r.submitted_by || null,
+    sourceType: r.source_type || "MANUAL",
+    sourceName: r.source_name || r.source || null,
+    sourceUrl: r.source_url || null,
+    // DRAFT | PENDING_REVIEW | VERIFIED | PUBLISHED | REJECTED | EXPIRED
+    verificationStatus: r.verification_status || (r.verified ? "PUBLISHED" : "DRAFT"),
+    verifiedAt: r.verified_at || null,
+    verifiedBy: r.verified_by || null,
+    lastVerifiedAt: r.last_verified_at || null,
+    publishedAt: r.published_at || null,
+    rejectionReason: r.rejection_reason || null,
+  };
+}
+
+export function rowToOrganization(r) {
+  return {
+    id: r.id,
+    ownerId: r.owner_id,
+    name: r.name || "",
+    website: r.website || "",
+    logoUrl: r.logo_url || "",
+    description: r.description || "",
+    orgType: r.org_type || "",
+    contactName: r.contact_name || "",
+    contactEmail: r.contact_email || "",
+    // UNVERIFIED | PENDING_VERIFICATION | VERIFIED | SUSPENDED
+    verificationStatus: r.verification_status || "UNVERIFIED",
+    verifiedAt: r.verified_at || null,
+    verifiedBy: r.verified_by || null,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
+}
+
+export function organizationToRow(o) {
+  return {
+    name: o.name,
+    website: o.website || null,
+    logo_url: o.logoUrl || null,
+    description: o.description || null,
+    org_type: o.orgType || null,
+    contact_name: o.contactName || null,
+    contact_email: o.contactEmail || null,
+  };
+}
+
+export function rowToSource(r) {
+  return {
+    id: r.id,
+    name: r.name,
+    website: r.website || "",
+    sourceUrl: r.source_url || "",
+    sourceType: r.source_type || "RSS",
+    method: r.method || "",
+    trustLevel: r.trust_level || "MEDIUM",
+    enabled: !!r.enabled,
+    refreshFrequency: r.refresh_frequency || "daily",
+    lastCheckedAt: r.last_checked_at || null,
+    lastSuccessAt: r.last_success_at || null,
+    lastError: r.last_error || null,
+    opportunitiesFound: r.opportunities_found || 0,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
+}
+
+export function sourceToRow(s) {
+  return {
+    name: s.name,
+    website: s.website || null,
+    source_url: s.sourceUrl || null,
+    source_type: s.sourceType || "RSS",
+    method: s.method || null,
+    trust_level: s.trustLevel || "MEDIUM",
+    enabled: !!s.enabled,
+    refresh_frequency: s.refreshFrequency || "daily",
+  };
+}
+
+export function rowToNotification(r) {
+  return {
+    id: r.id,
+    type: r.type,
+    title: r.title,
+    body: r.body || "",
+    opportunityId: r.opportunity_id || null,
+    read: !!r.read,
+    createdAt: r.created_at,
   };
 }
 

@@ -1,8 +1,10 @@
-import { useState } from "react";
-import { Plus, Trash2, Pencil, X, ExternalLink } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import { Plus, Trash2, Pencil, X, ExternalLink, Check, Ban } from "lucide-react";
 import { useCatalog } from "../context/CatalogContext.jsx";
-import { createOpportunity, updateOpportunity, deleteOpportunity } from "../lib/dataService.js";
+import { createOpportunity, updateOpportunity, deleteOpportunity, setOpportunityVerification } from "../lib/dataService.js";
 import Button from "../components/ui/Button.jsx";
+import { OpportunityVerificationBadge } from "../components/ui/VerificationBadge.jsx";
 
 // Simple in-app catalog editor, gated by AdminRoute (profile.isAdmin).
 // Array-shaped fields (categories, skills, etc.) are edited as comma-
@@ -12,8 +14,16 @@ const EMPTY = {
   id: "", title: "", organization: "", type: "Scholarship", description: "",
   location: "", remote: false, categories: "", goals: "", careerStages: "",
   skills: "", fundingType: "", fundingAmount: "", deadline: "", eligibility: "",
-  benefits: "", applicationUrl: "", source: "", verified: false,
+  benefits: "", applicationUrl: "", source: "", sourceUrl: "", verified: false,
 };
+
+const STATUS_TABS = [
+  { key: "all", label: "All" },
+  { key: "PENDING_REVIEW", label: "Pending review" },
+  { key: "PUBLISHED", label: "Published" },
+  { key: "REJECTED", label: "Rejected" },
+  { key: "EXPIRED", label: "Expired" },
+];
 
 function toCsv(arr) { return (arr || []).join(", "); }
 function fromCsv(str) { return str.split(",").map((s) => s.trim()).filter(Boolean); }
@@ -25,7 +35,7 @@ function opportunityToFormState(o) {
     categories: toCsv(o.categories), goals: toCsv(o.goals), careerStages: toCsv(o.careerStages),
     skills: toCsv(o.skills), fundingType: o.funding?.type || "", fundingAmount: o.funding?.amount ?? "",
     deadline: o.deadline || "", eligibility: toCsv(o.eligibility), benefits: toCsv(o.benefits),
-    applicationUrl: o.applicationUrl || "", source: o.source || "", verified: !!o.verified,
+    applicationUrl: o.applicationUrl || "", source: o.source || "", sourceUrl: o.sourceUrl || "", verified: !!o.verified,
   };
 }
 
@@ -37,7 +47,8 @@ function formStateToOpportunity(f) {
     careerStages: fromCsv(f.careerStages), skills: fromCsv(f.skills),
     funding: { type: f.fundingType, amount: f.fundingAmount === "" ? null : Number(f.fundingAmount) },
     deadline: f.deadline, eligibility: fromCsv(f.eligibility), benefits: fromCsv(f.benefits),
-    applicationUrl: f.applicationUrl, source: f.source, verified: f.verified,
+    applicationUrl: f.applicationUrl, source: f.source, sourceUrl: f.sourceUrl || null,
+    sourceType: "MANUAL", verified: f.verified, verificationStatus: "PUBLISHED",
   };
 }
 
@@ -96,6 +107,7 @@ function OpportunityForm({ initial, onCancel, onSaved }) {
         <Field label="Funding type"><input className={inputClass} style={inputStyle} value={form.fundingType} onChange={set("fundingType")} placeholder="Fully funded / Stipend / Grant" /></Field>
         <Field label="Funding amount (USD, optional)"><input type="number" className={inputClass} style={inputStyle} value={form.fundingAmount} onChange={set("fundingAmount")} /></Field>
         <Field label="Source (where you found it)"><input className={inputClass} style={inputStyle} value={form.source} onChange={set("source")} placeholder="e.g. aauw.org" /></Field>
+        <Field label="Source URL (link to the original listing, if different from the application URL)"><input type="url" className={inputClass} style={inputStyle} value={form.sourceUrl} onChange={set("sourceUrl")} placeholder="https://…" /></Field>
         <div className="flex items-end gap-4 pb-2">
           <label className="flex items-center gap-2 text-[13px]"><input type="checkbox" checked={form.remote} onChange={set("remote")} /> Remote</label>
           <label className="flex items-center gap-2 text-[13px]"><input type="checkbox" checked={form.verified} onChange={set("verified")} /> Verified</label>
@@ -126,9 +138,11 @@ function OpportunityForm({ initial, onCancel, onSaved }) {
 }
 
 export default function AdminOpportunities() {
-  const { opportunities, refreshOpportunities } = useCatalog();
+  const { allOpportunities: opportunities, refreshOpportunities } = useCatalog();
   const [editing, setEditing] = useState(null); // null | "new" | opportunity object
   const [deletingId, setDeletingId] = useState(null);
+  const [verifyingId, setVerifyingId] = useState(null);
+  const [statusFilter, setStatusFilter] = useState("all");
 
   async function handleDelete(id) {
     if (!window.confirm("Remove this opportunity? This can't be undone.")) return;
@@ -141,40 +155,101 @@ export default function AdminOpportunities() {
     }
   }
 
+  async function handleApprove(id) {
+    setVerifyingId(id);
+    try {
+      await setOpportunityVerification(id, "PUBLISHED");
+      await refreshOpportunities();
+    } finally {
+      setVerifyingId(null);
+    }
+  }
+
+  async function handleReject(id) {
+    const reason = window.prompt("Reason for rejecting this submission (shown to the org internally, optional):", "");
+    if (reason === null) return; // cancelled
+    setVerifyingId(id);
+    try {
+      await setOpportunityVerification(id, "REJECTED", reason || null);
+      await refreshOpportunities();
+    } finally {
+      setVerifyingId(null);
+    }
+  }
+
+  const counts = useMemo(() => {
+    const c = { all: opportunities.length };
+    for (const tab of STATUS_TABS) if (tab.key !== "all") c[tab.key] = opportunities.filter((o) => o.verificationStatus === tab.key).length;
+    return c;
+  }, [opportunities]);
+
+  const filtered = statusFilter === "all" ? opportunities : opportunities.filter((o) => o.verificationStatus === statusFilter);
+
   return (
     <div className="mx-auto max-w-4xl px-6 py-10">
+      <div className="mb-4 flex gap-4 text-[13px] font-semibold" style={{ color: "var(--accent-strong)" }}>
+        <Link to="/admin/opportunities" className="underline">Opportunities</Link>
+        <Link to="/admin/organizations">Organizations</Link>
+        <Link to="/admin/sources">Sources</Link>
+      </div>
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="font-display text-[24px]">Opportunities catalog</h1>
-          <p className="mt-1 text-[13.5px]" style={{ color: "var(--text-secondary)" }}>{opportunities.length} listings · closed ones drop off automatically once their deadline passes.</p>
+          <p className="mt-1 text-[13.5px]" style={{ color: "var(--text-secondary)" }}>{opportunities.length} listings · closed ones drop off automatically once their deadline passes · {counts.PENDING_REVIEW || 0} awaiting review.</p>
         </div>
         {editing === null && <Button variant="primary" icon={Plus} onClick={() => setEditing("new")}>Add opportunity</Button>}
+      </div>
+
+      <div className="mb-5 flex flex-wrap gap-1.5">
+        {STATUS_TABS.map((tab) => (
+          <button
+            key={tab.key}
+            type="button"
+            onClick={() => setStatusFilter(tab.key)}
+            className="rounded-full px-3 py-1.5 text-[12.5px] font-semibold"
+            style={statusFilter === tab.key
+              ? { background: "var(--accent)", color: "var(--text-on-accent)" }
+              : { background: "var(--surface-muted)", color: "var(--text-secondary)" }}
+          >
+            {tab.label}{tab.key !== "all" ? ` (${counts[tab.key] || 0})` : ""}
+          </button>
+        ))}
       </div>
 
       {editing === "new" && <div className="mb-6"><OpportunityForm onCancel={() => setEditing(null)} onSaved={() => setEditing(null)} /></div>}
       {editing && editing !== "new" && <div className="mb-6"><OpportunityForm initial={opportunityToFormState(editing)} onCancel={() => setEditing(null)} onSaved={() => setEditing(null)} /></div>}
 
       <div className="space-y-2.5">
-        {opportunities.map((o) => (
+        {filtered.map((o) => (
           <div key={o.id} className="nexa-card flex items-center justify-between gap-3 rounded-[var(--radius-md)] p-3.5">
             <div className="min-w-0">
-              <div className="truncate text-[13.5px] font-semibold">{o.title}</div>
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="truncate text-[13.5px] font-semibold">{o.title}</div>
+                <OpportunityVerificationBadge status={o.verificationStatus} />
+              </div>
               <div className="truncate text-[11.5px]" style={{ color: "var(--text-secondary)" }}>
-                {o.organization} · {o.type} · {o.deadline}
+                {o.organization} · {o.type} · {o.deadline} · {o.organizationId ? "org submission" : "admin curated"}
                 {o.applicationUrl && o.applicationUrl !== "#" && (
                   <a href={o.applicationUrl} target="_blank" rel="noreferrer" className="ml-1.5 inline-flex items-center gap-0.5" style={{ color: "var(--accent-strong)" }}>
                     link <ExternalLink size={10} />
                   </a>
                 )}
               </div>
+              {o.rejectionReason && <div className="mt-0.5 text-[11px]" style={{ color: "var(--text-tertiary)" }}>Rejected: {o.rejectionReason}</div>}
             </div>
             <div className="flex shrink-0 items-center gap-1.5">
+              {o.verificationStatus === "PENDING_REVIEW" && (
+                <>
+                  <button type="button" onClick={() => handleApprove(o.id)} disabled={verifyingId === o.id} aria-label="Approve" title="Approve & publish" className="flex h-8 w-8 items-center justify-center rounded-full" style={{ background: "var(--success-soft, #d7f2e2)" }}><Check size={14} /></button>
+                  <button type="button" onClick={() => handleReject(o.id)} disabled={verifyingId === o.id} aria-label="Reject" title="Reject" className="flex h-8 w-8 items-center justify-center rounded-full" style={{ background: "var(--surface-muted)" }}><Ban size={14} /></button>
+                </>
+              )}
               <button type="button" onClick={() => setEditing(o)} aria-label="Edit" className="flex h-8 w-8 items-center justify-center rounded-full" style={{ background: "var(--surface-muted)" }}><Pencil size={14} /></button>
               <button type="button" onClick={() => handleDelete(o.id)} disabled={deletingId === o.id} aria-label="Delete" className="flex h-8 w-8 items-center justify-center rounded-full" style={{ background: "var(--surface-muted)" }}><Trash2 size={14} /></button>
             </div>
           </div>
         ))}
-        {opportunities.length === 0 && <div className="text-[13.5px]" style={{ color: "var(--text-secondary)" }}>No opportunities yet — add the first one above.</div>}
+        {filtered.length === 0 && <div className="text-[13.5px]" style={{ color: "var(--text-secondary)" }}>Nothing in this view yet.</div>}
       </div>
     </div>
   );

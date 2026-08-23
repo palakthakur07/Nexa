@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import Badge from "../ui/Badge.jsx";
+import { OpportunityVerificationBadge } from "../ui/VerificationBadge.jsx";
 import MatchRing from "../ui/MatchRing.jsx";
 import DeadlineBadge from "./DeadlineBadge.jsx";
 import SaveButton from "./SaveButton.jsx";
@@ -27,6 +28,7 @@ export default function OpportunityCard({ opportunity, match, compact = false })
           <div className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--text-tertiary)" }}>{opportunity.type}</div>
           <div className="mt-0.5 text-[14.5px] font-semibold leading-snug">{opportunity.title}</div>
           <div className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{opportunity.organization} · {opportunity.location}</div>
+          <div className="mt-1.5"><OpportunityVerificationBadge status={opportunity.verificationStatus} /></div>
         </div>
         <MatchRing value={match} size={40} />
       </div>
