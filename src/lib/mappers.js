@@ -119,24 +119,40 @@ export function rowToNotification(r) {
   };
 }
 
-export function rowToWoman(r) {
+// A real mentor row — every field here was typed in by the person it
+// describes, via the "Become a Mentor" form. No name/photo/bio here was
+// ever invented by the app.
+export function rowToMentor(r) {
   return {
     id: r.id,
+    userId: r.user_id,
     name: r.name,
     headline: r.headline,
     location: r.location,
+    photoUrl: r.photo_url,
+    profession: r.profession,
+    industry: r.industry,
+    organization: r.organization,
     about: r.about,
-    journey: r.journey || [],
-    journeyTags: r.journey_tags || [],
-    relevantGoals: r.relevant_goals || [],
     experience: r.experience || [],
     skills: r.skills || [],
     canHelpWith: r.can_help_with || [],
-    willingToHelpWith: r.willing_to_help_with || [],
+    topics: r.topics || [],
     languages: r.languages || [],
     availability: r.availability,
-    verified: r.verified,
     experienceLevel: r.experience_level,
+    verified: r.verified,
+    discoverable: r.discoverable,
+  };
+}
+
+export function mentorToRow(m) {
+  return {
+    name: m.name, headline: m.headline, location: m.location, photo_url: m.photoUrl || null,
+    profession: m.profession, industry: m.industry, organization: m.organization, about: m.about,
+    experience: m.experience || [], skills: m.skills || [], can_help_with: m.canHelpWith || [],
+    topics: m.topics || [], languages: m.languages || [], availability: m.availability,
+    experience_level: m.experienceLevel, discoverable: m.discoverable !== false,
   };
 }
 
@@ -155,6 +171,7 @@ export function rowToProfile(r) {
     customRoadmapItems: r.custom_roadmap_items || [],
     onboardingComplete: Boolean(r.onboarding_complete),
     isAdmin: Boolean(r.is_admin),
+    roles: r.roles || ["member"],
   };
 }
 
@@ -171,6 +188,7 @@ export function profileToRow(p) {
     give_back: p.giveBack,
     custom_roadmap_items: p.customRoadmapItems,
     onboarding_complete: p.onboardingComplete,
+    roles: p.roles,
     updated_at: new Date().toISOString(),
   };
 }

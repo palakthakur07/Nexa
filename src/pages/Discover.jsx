@@ -12,7 +12,7 @@ import { Reveal } from "../lib/hooks.jsx";
 import { useProfile } from "../context/ProfileContext.jsx";
 import { useCatalog } from "../context/CatalogContext.jsx";
 import { calculateMatchScore } from "../lib/matching.js";
-import { calculateWomanMatchScore } from "../lib/womanMatching.js";
+import { calculateMentorMatchScore } from "../lib/mentorMatching.js";
 import { deadlineBucket, daysLeft } from "../lib/deadline.js";
 
 function matchesFilters(opp, filters) {
@@ -68,17 +68,18 @@ export default function Discover() {
   const featured = sorted[0];
   const rest = sorted.slice(1);
 
-  // Pick the woman most relevant to the featured opportunity's focus areas
-  // (falls back to the user's best overall match).
-  const relevantWoman = useMemo(() => {
+  // Pick the mentor most relevant to the featured opportunity's focus
+  // areas (falls back to the user's best overall match). Naturally null
+  // when there are zero real mentors — never backfilled.
+  const relevantMentor = useMemo(() => {
     if (!featured) return null;
-    const scored = mentors.map((w) => ({
-      woman: w,
-      relevance: w.experience.filter((e) => featured.opportunity.categories.includes(e)).length,
-      match: calculateWomanMatchScore(profile, w),
+    const scored = mentors.map((m) => ({
+      mentor: m,
+      relevance: (m.experience || []).filter((e) => featured.opportunity.categories.includes(e)).length,
+      match: calculateMentorMatchScore(profile, m),
     }));
     scored.sort((a, b) => b.relevance - a.relevance || b.match - a.match);
-    return scored[0]?.woman || null;
+    return scored[0]?.mentor || null;
   }, [featured, profile, mentors]);
 
   return (
@@ -91,9 +92,9 @@ export default function Discover() {
         </Reveal>
       )}
 
-      {relevantWoman && (
+      {relevantMentor && (
         <Reveal delay={110} className="mb-12">
-          <SomeoneWhosBeenThere woman={relevantWoman} />
+          <SomeoneWhosBeenThere mentor={relevantMentor} />
         </Reveal>
       )}
 

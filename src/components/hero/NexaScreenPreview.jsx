@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { GraduationCap, Sparkles, ListChecks, Target, ArrowUpRight } from "lucide-react";
+import logoSrc from "../../assets/logo.png";
 
 // Rendered inside the MacBook screen cutout on the landing hero. A
 // hub-and-spoke diagram: headline + subtitle up top, four feature cards in
@@ -141,15 +142,16 @@ export default function NexaScreenPreview() {
           <circle cx={CENTER.x} cy={CENTER.y} r={RING_R} fill="none" stroke="var(--border-strong)" strokeWidth={1.4} strokeDasharray="3 6" opacity={0.7} />
           {/* Center mark drawn in SVG (not HTML) so it's guaranteed concentric with the ring above, at any render size. */}
           <circle cx={CENTER.x} cy={CENTER.y} r={62} fill="var(--accent-soft)" opacity={0.55} />
-          <circle cx={CENTER.x} cy={CENTER.y} r={36} fill="var(--accent-strong)" />
-          <circle cx={CENTER.x} cy={CENTER.y} r={36} fill="url(#nexaOrbShine)" />
-          <text x={CENTER.x} y={CENTER.y + 6} textAnchor="middle" fontFamily="var(--font-display)" fontWeight="700" fontSize="17" fill="#fff">N</text>
-          <circle cx={CENTER.x + 13} cy={CENTER.y - 12} r={2.4} fill="#fff" />
+          <image href={logoSrc} x={CENTER.x - 36} y={CENTER.y - 36} width={72} height={72} clipPath="url(#nexaOrbClip)" preserveAspectRatio="xMidYMid slice" />
+          <circle cx={CENTER.x} cy={CENTER.y} r={36} fill="url(#nexaOrbShine)" style={{ mixBlendMode: "overlay" }} />
           <defs>
             <radialGradient id="nexaOrbShine" cx="35%" cy="30%" r="70%">
               <stop offset="0%" stopColor="#fff" stopOpacity="0.35" />
               <stop offset="100%" stopColor="#fff" stopOpacity="0" />
             </radialGradient>
+            <clipPath id="nexaOrbClip">
+              <circle cx={CENTER.x} cy={CENTER.y} r={36} />
+            </clipPath>
           </defs>
         </svg>
 

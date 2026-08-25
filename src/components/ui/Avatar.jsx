@@ -1,4 +1,15 @@
-export default function Avatar({ initials, size = 40 }) {
+export default function Avatar({ initials, size = 40, photoUrl }) {
+  if (photoUrl) {
+    return (
+      <img
+        src={photoUrl}
+        alt=""
+        className="rounded-full object-cover"
+        style={{ width: size, height: size }}
+        onError={(e) => { e.currentTarget.style.display = "none"; }}
+      />
+    );
+  }
   return (
     <div
       className="flex items-center justify-center rounded-full font-semibold"

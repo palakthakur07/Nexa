@@ -33,14 +33,14 @@ export default function ContextPanel({ context }) {
             <div className="mt-1.5 text-[11.5px]" style={{ color: "var(--text-secondary)" }}>{context.currentOpportunity.funding} · {context.currentOpportunity.categories.join(", ")}</div>
           </div>
         </Section>
-      ) : context.currentWoman ? (
+      ) : context.currentMentor ? (
         <Section eyebrow="Current connection">
           <div className="nexa-card rounded-[var(--radius-md)] p-3.5">
             <div className="flex items-center justify-between gap-2">
-              <div className="text-[13px] font-semibold leading-snug">{context.currentWoman.name}</div>
-              <MatchRing value={context.currentWoman.match} size={32} />
+              <div className="text-[13px] font-semibold leading-snug">{context.currentMentor.name}</div>
+              <MatchRing value={context.currentMentor.match} size={32} />
             </div>
-            <div className="mt-1.5 text-[11.5px]" style={{ color: "var(--text-secondary)" }}>{context.currentWoman.headline}</div>
+            <div className="mt-1.5 text-[11.5px]" style={{ color: "var(--text-secondary)" }}>{context.currentMentor.headline}</div>
           </div>
         </Section>
       ) : null}

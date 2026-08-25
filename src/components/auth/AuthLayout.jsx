@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import Logo from "../ui/Logo.jsx";
 
 // Shared shell for the auth screens — centered card on the warm brand
 // background, with a subtle entrance animation.
@@ -12,7 +13,9 @@ export default function AuthLayout({ title, subtitle, children, footer }) {
         className="nexa-panel w-full max-w-[420px] rounded-[var(--radius-xl)] p-8 md:p-10"
       >
         <div className="mb-7 text-center">
-          <div className="mx-auto mb-4 flex h-11 w-11 items-center justify-center rounded-full font-display text-[17px]" style={{ background: "var(--accent-strong)", color: "#fff" }}>N</div>
+          <div className="mx-auto mb-4 flex h-11 w-11 items-center justify-center overflow-hidden rounded-full">
+            <Logo size={44} />
+          </div>
           <h1 className="font-display text-[1.7rem]">{title}</h1>
           {subtitle && <p className="mt-1.5 text-[13.5px]" style={{ color: "var(--text-secondary)" }}>{subtitle}</p>}
         </div>
@@ -91,4 +94,3 @@ export function OrDivider() {
     </div>
   );
 }
-

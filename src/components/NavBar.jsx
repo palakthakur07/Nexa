@@ -4,6 +4,7 @@ import { Sparkles, LogOut } from "lucide-react";
 import { motion } from "framer-motion";
 import Button from "./ui/Button.jsx";
 import Avatar from "./ui/Avatar.jsx";
+import Logo from "./ui/Logo.jsx";
 import { useProfile } from "../context/ProfileContext.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useOrganization } from "../context/OrganizationContext.jsx";
@@ -51,10 +52,10 @@ export default function NavBar() {
         <motion.div
           whileHover={{ rotate: -8, scale: 1.08 }}
           transition={{ type: "spring", stiffness: 400, damping: 15 }}
-          className="flex items-center justify-center rounded-full font-display text-[15px]"
-          style={{ width: 32, height: 32, background: "var(--accent-strong)", color: "#fff" }}
+          className="flex items-center justify-center overflow-hidden rounded-full"
+          style={{ width: 32, height: 32 }}
         >
-          N
+          <Logo size={32} />
         </motion.div>
         <span className="font-display text-[19px]">NEXA</span>
       </button>
@@ -96,4 +97,3 @@ export default function NavBar() {
     </motion.header>
   );
 }
-

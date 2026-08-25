@@ -14,9 +14,9 @@ function greetingOpener(ctx) {
     const goalNote = ctx.user.goals.length ? ` You have a strong match here, especially because ${ctx.user.priorities[0] ? ctx.user.priorities[0].toLowerCase() : "your priorities"} and ${ctx.user.goals[0].toLowerCase()} both matter to you.` : "";
     return `I've got **${o.title}** open with you.\n\nIt's a ${fmtPct(o.match)} match.${goalNote}\n\nWhat would you like to know?`;
   }
-  if (ctx.currentWoman) {
-    const w = ctx.currentWoman;
-    return `I've got **${w.name}**'s profile open with you — ${w.headline.toLowerCase()}, a ${fmtPct(w.match)} match for what you're working on.\n\nWant to know why I recommended her, or how to reach out?`;
+  if (ctx.currentMentor) {
+    const m = ctx.currentMentor;
+    return `I've got **${m.name}**'s profile open with you — ${m.headline.toLowerCase()}, a ${fmtPct(m.match)} match for what you're working on.\n\nWant to know why I recommended them, or how to reach out?`;
   }
   return `Hi${name}. Ask me about your goals, opportunities, career, applications, or what to do next.`;
 }
@@ -85,14 +85,17 @@ function respondEligibility(ctx) {
 }
 
 function respondNetwork(ctx) {
-  if (ctx.recommendedWomen.length === 0) {
-    return { content: "I don't have a strong match in the network for this yet — try adding more detail to your interests or goals in your profile.", actions: [{ type: "OPEN_PROFILE", label: "Update profile" }] };
+  if (ctx.recommendedMentors.length === 0) {
+    return {
+      content: "I don't have a real mentor match for this yet — either no one matching your interests has registered on the network so far, or your profile could use more detail. This isn't something I'll guess at.",
+      actions: [{ type: "OPEN_PROFILE", label: "Update profile" }, { type: "OPEN_NETWORK", label: "Browse the network" }],
+    };
   }
-  const top = ctx.recommendedWomen[0];
+  const top = ctx.recommendedMentors[0];
   let content = `**${top.name}** may be your best bet — ${fmtPct(top.match)} match, ${top.headline.toLowerCase()}.\n\n`;
-  content += `She can help with:\n${top.canHelpWith.slice(0, 3).map((c) => `- ${c}`).join("\n")}`;
-  if (ctx.recommendedWomen[1]) content += `\n\n**${ctx.recommendedWomen[1].name}** is also a strong option if she's not available.`;
-  return { content, actions: [{ type: "OPEN_WOMAN_PROFILE", label: `View ${top.name.split(" ")[0]}'s profile`, payload: { id: top.id } }] };
+  content += `They can help with:\n${top.canHelpWith.slice(0, 3).map((c) => `- ${c}`).join("\n")}`;
+  if (ctx.recommendedMentors[1]) content += `\n\n**${ctx.recommendedMentors[1].name}** is also a strong option if they're not available.`;
+  return { content, actions: [{ type: "OPEN_MENTOR_PROFILE", label: `View ${top.name.split(" ")[0]}'s profile`, payload: { id: top.id } }] };
 }
 
 function respondRoadmapStatus(ctx, message) {
@@ -169,7 +172,7 @@ export function generateMockResponse(message, context, isFirstMessage) {
     }
     const actions = [];
     if (context.currentOpportunity) actions.push({ type: "OPEN_OPPORTUNITY", label: "View opportunity", payload: { id: context.currentOpportunity.id } });
-    if (context.currentWoman) actions.push({ type: "OPEN_WOMAN_PROFILE", label: "View profile", payload: { id: context.currentWoman.id } });
+    if (context.currentMentor) actions.push({ type: "OPEN_MENTOR_PROFILE", label: "View profile", payload: { id: context.currentMentor.id } });
     return { content: greetingOpener(context), actions };
   }
 

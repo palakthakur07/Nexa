@@ -27,8 +27,9 @@ import Discover from "./pages/Discover.jsx";
 import OpportunityDetail from "./pages/OpportunityDetail.jsx";
 import Saved from "./pages/Saved.jsx";
 import Network from "./pages/Network.jsx";
-import WomanDetail from "./pages/WomanDetail.jsx";
-import Connections from "./pages/Connections.jsx";
+import MentorDetail from "./pages/MentorDetail.jsx";
+import BecomeMentor from "./pages/BecomeMentor.jsx";
+import Requests from "./pages/Requests.jsx";
 import Nexa from "./pages/Nexa.jsx";
 import PlaceholderRoute from "./pages/PlaceholderRoute.jsx";
 import AdminOpportunities from "./pages/AdminOpportunities.jsx";
@@ -36,6 +37,7 @@ import AdminOrganizations from "./pages/AdminOrganizations.jsx";
 import AdminSources from "./pages/AdminSources.jsx";
 import OrgSignup from "./pages/OrgSignup.jsx";
 import OrgDashboard from "./pages/OrgDashboard.jsx";
+
 
 // Small helpers to keep the route table readable.
 const P = ({ children }) => <PageTransition>{children}</PageTransition>;
@@ -70,8 +72,10 @@ function AnimatedRoutes() {
         <Route path="/discover/:id" element={<Guard><OpportunityDetail /></Guard>} />
         <Route path="/saved" element={<Guard><Saved /></Guard>} />
         <Route path="/network" element={<Guard><Network /></Guard>} />
-        <Route path="/network/connections" element={<Guard><Connections /></Guard>} />
-        <Route path="/network/:id" element={<Guard><WomanDetail /></Guard>} />
+        <Route path="/network/connections" element={<Navigate to="/requests" replace />} />
+        <Route path="/network/:id" element={<Guard><MentorDetail /></Guard>} />
+        <Route path="/become-mentor" element={<Guard><BecomeMentor /></Guard>} />
+        <Route path="/requests" element={<Guard><Requests /></Guard>} />
         <Route path="/nexa" element={<Guard><Nexa /></Guard>} />
         <Route path="/roadmap" element={<Guard><PlaceholderRoute route="roadmap" /></Guard>} />
 

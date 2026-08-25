@@ -1,9 +1,10 @@
 import { Check, Clock, UserPlus } from "lucide-react";
 
-// Not connected -> Request sent -> Connected. Never claims a real message
-// was delivered anywhere beyond this demo's local state.
+// none -> pending -> accepted (matches connection_requests.status in
+// schema.sql). Sourced from a real accepted request row — this can only
+// ever say "Connected" because the mentor genuinely accepted.
 export default function ConnectionStatus({ status }) {
-  if (status === "connected") {
+  if (status === "accepted") {
     return <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12.5px] font-semibold" style={{ background: "var(--success-soft)", color: "var(--success)" }}><Check size={13} /> Connected</span>;
   }
   if (status === "pending") {

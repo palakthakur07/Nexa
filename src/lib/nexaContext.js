@@ -3,19 +3,17 @@
 // request"). This is pure data assembly, no UI, no network — the same
 // object works whether it's fed to a real provider or the mock engine.
 import { calculateMatchScore } from "./matching.js";
-import { calculateWomanMatchScore } from "./womanMatching.js";
+import { calculateMentorMatchScore } from "./mentorMatching.js";
 import { getNextMove, generateRoadmap } from "./scoring.js";
 
-// `opportunities` and `women` are the live catalog arrays (from Supabase via
-// CatalogContext, or the offline sample data). Passing them in keeps this
-// module free of any direct data-source import.
-export function buildNexaContext({ profile, saved, connections, entryContext, opportunities = [], women = [] }) {
-  // Nexa AI must never surface a listing that isn't actually published —
-  // the array passed in can include an admin's or org's own pending/draft
-  // rows (RLS lets an owner see their own non-published rows), so filter to
-  // what's actually real to the end user before any matching happens.
-  const OPPORTUNITIES = opportunities.filter((o) => !o.verificationStatus || o.verificationStatus === "PUBLISHED" || o.verified);
-  const WOMEN = women;
+// `opportunities` and `mentors` are the live catalog arrays from
+// CatalogContext (real Supabase data, or empty for mentors offline — see
+// CatalogContext.jsx). Passing them in keeps this module free of any
+// direct data-source import. `mentors` are real, self-registered people;
+// this never recommends anyone who didn't register themselves.
+export function buildNexaContext({ profile, saved, requests, entryContext, opportunities = [], mentors = [] }) {
+  const OPPORTUNITIES = opportunities;
+  const MENTORS = mentors;
   const savedOpportunities = Object.entries(saved || {}).map(([id, record]) => {
     const opportunity = OPPORTUNITIES.find((o) => o.id === id);
     if (!opportunity) return null;
@@ -27,8 +25,11 @@ export function buildNexaContext({ profile, saved, connections, entryContext, op
     .sort((a, b) => b.match - a.match)
     .slice(0, 5);
 
-  const recommendedWomen = [...WOMEN]
-    .map((w) => ({ id: w.id, name: w.name, headline: w.headline, match: calculateWomanMatchScore(profile, w), canHelpWith: w.canHelpWith }))
+  // Genuinely empty when nobody has registered as a mentor yet — never
+  // backfilled, so NEXA correctly says "I couldn't find a match" instead
+  // of inventing someone.
+  const recommendedMentors = [...MENTORS]
+    .map((m) => ({ id: m.id, name: m.name, headline: m.headline, match: calculateMentorMatchScore(profile, m), canHelpWith: m.canHelpWith }))
     .sort((a, b) => b.match - a.match)
     .slice(0, 5);
 
@@ -36,14 +37,14 @@ export function buildNexaContext({ profile, saved, connections, entryContext, op
   const nextMove = getNextMove(profile);
 
   let currentOpportunity = null;
-  let currentWoman = null;
+  let currentMentor = null;
   if (entryContext?.type === "opportunity") {
     const o = OPPORTUNITIES.find((x) => x.id === entryContext.id);
     if (o) currentOpportunity = { id: o.id, title: o.title, match: calculateMatchScore(profile, o), deadline: o.deadline, funding: o.funding.type, categories: o.categories, eligibility: o.eligibility };
   }
-  if (entryContext?.type === "woman") {
-    const w = WOMEN.find((x) => x.id === entryContext.id);
-    if (w) currentWoman = { id: w.id, name: w.name, headline: w.headline, match: calculateWomanMatchScore(profile, w), canHelpWith: w.canHelpWith, journey: w.journey, availability: w.availability };
+  if (entryContext?.type === "mentor") {
+    const m = MENTORS.find((x) => x.id === entryContext.id);
+    if (m) currentMentor = { id: m.id, name: m.name, headline: m.headline, match: calculateMentorMatchScore(profile, m), canHelpWith: m.canHelpWith, availability: m.availability };
   }
 
   return {
@@ -57,15 +58,15 @@ export function buildNexaContext({ profile, saved, connections, entryContext, op
       helpTopics: profile.helpTopics,
     },
     currentOpportunity,
-    currentWoman,
+    currentMentor,
     savedOpportunities,
     topOpportunities,
-    hasPublishedOpportunities: OPPORTUNITIES.length > 0,
     roadmap,
     nextMove,
-    recommendedWomen,
-    connections: (connections || []).map((c) => ({ name: c.name, reason: c.reason })),
+    recommendedMentors,
+    // Real accepted connections only — a pending or declined request is
+    // not "someone you're connected with".
+    connections: (requests || []).filter((r) => r.status === "accepted").map((r) => ({ mentorId: r.mentor_id, topic: r.topic })),
     entryContext: entryContext || null,
   };
 }
-

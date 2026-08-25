@@ -22,7 +22,7 @@ export default function Nexa() {
   const navigate = useNavigate();
   const { profile, addRoadmapItem } = useProfile();
   const { saved, toggleSave } = useSaved();
-  const { connections } = useConnections();
+  const { sent: requests } = useConnections();
   const { conversations, activeId, setActiveId, createConversation, addMessage, deleteConversation, renameConversation } = useConversations();
   const { opportunities, mentors } = useCatalog();
 
@@ -36,19 +36,19 @@ export default function Nexa() {
   const entryContext = active?.entryContext || null;
 
   const context = useMemo(
-    () => buildNexaContext({ profile, saved, connections, entryContext, opportunities, women: mentors }),
-    [profile, saved, connections, entryContext, opportunities, mentors]
+    () => buildNexaContext({ profile, saved, requests, entryContext, opportunities, mentors }),
+    [profile, saved, requests, entryContext, opportunities, mentors]
   );
 
   // Seed a conversation from router state (contextual entry from
-  // Discover/OpportunityDetail/Network/WomanDetail/Dashboard/Profile).
+  // Discover/OpportunityDetail/Network/MentorDetail/Dashboard/Profile).
   useEffect(() => {
     if (seededRef.current) return;
     seededRef.current = true;
     const incoming = location.state?.entryContext || null;
     if (incoming) {
       const id = createConversation(incoming);
-      const ctx = buildNexaContext({ profile, saved, connections, entryContext: incoming, opportunities, women: mentors });
+      const ctx = buildNexaContext({ profile, saved, requests, entryContext: incoming, opportunities, mentors });
       setThinking(true);
       askNexa("", ctx, []).then((res) => {
         addMessage(id, { id: `m-${Date.now()}`, role: "nexa", content: res.content, actions: res.actions, createdAt: new Date().toISOString() });
@@ -83,7 +83,7 @@ export default function Nexa() {
   const runAction = useCallback((action) => {
     switch (action.type) {
       case "OPEN_OPPORTUNITY": navigate(`/discover/${action.payload.id}`); return null;
-      case "OPEN_WOMAN_PROFILE": navigate(`/network/${action.payload.id}`); return null;
+      case "OPEN_MENTOR_PROFILE": navigate(`/network/${action.payload.id}`); return null;
       case "OPEN_DISCOVER": navigate("/discover"); return null;
       case "OPEN_NETWORK": navigate("/network"); return null;
       case "OPEN_PROFILE": navigate("/profile"); return null;

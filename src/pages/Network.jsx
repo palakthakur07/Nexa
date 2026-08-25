@@ -1,98 +1,120 @@
-import { useMemo, useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { SlidersHorizontal, Users, Sparkles } from "lucide-react";
-import NetworkHero from "../components/network/NetworkHero.jsx";
-import NetworkSearch from "../components/network/NetworkSearch.jsx";
-import NetworkFilters, { emptyNetworkFilters, activeNetworkFilterCount } from "../components/network/NetworkFilters.jsx";
-import WomanCard from "../components/network/WomanCard.jsx";
-import CommunitySuggestion from "../components/network/CommunitySuggestion.jsx";
-import GiveBackCard from "../components/network/GiveBackCard.jsx";
-import Button from "../components/ui/Button.jsx";
-import { Reveal } from "../lib/hooks.jsx";
-import { useProfile } from "../context/ProfileContext.jsx";
-import { useCatalog } from "../context/CatalogContext.jsx";
-import { calculateWomanMatchScore } from "../lib/womanMatching.js";
-
-function matchesFilters(woman, filters) {
-  if (filters.experience.length && !woman.experience.some((e) => filters.experience.includes(e))) return false;
-  if (filters.journey.length && !woman.journeyTags.some((j) => filters.journey.includes(j))) return false;
-  if (filters.helpType.length && !woman.willingToHelpWith.some((h) => filters.helpType.includes(h))) return false;
-  if (filters.languages.length && !woman.languages.some((l) => filters.languages.includes(l))) return false;
-  if (filters.locations.length) {
-    const ok = filters.locations.some((l) => (l === "Remote" ? woman.location === "Remote" : woman.location === l || (l === "International" && woman.location === "International")));
-    if (!ok) return false;
-  }
-  return true;
-}
-function matchesSearch(woman, query) {
-  if (!query.trim()) return true;
-  const q = query.trim().toLowerCase();
-  return [woman.name, woman.headline, ...woman.experience, ...woman.skills, ...woman.journey, ...woman.canHelpWith].join(" ").toLowerCase().includes(q);
-}
+import { Sparkles } from "lucide-react";
+import { supabase } from "../lib/supabaseClient";
+import MentorCard from "../components/network/MentorCard";
 
 export default function Network() {
-  const { profile } = useProfile();
-  const { mentors } = useCatalog();
   const navigate = useNavigate();
-  const [query, setQuery] = useState("");
-  const [filters, setFilters] = useState(emptyNetworkFilters);
-  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [mentors, setMentors] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [selectedField, setSelectedField] = useState("All Fields");
 
-  const scored = useMemo(() => mentors.map((w) => ({ woman: w, match: calculateWomanMatchScore(profile, w) })).sort((a, b) => b.match - a.match), [profile, mentors]);
-  const filtered = useMemo(() => scored.filter(({ woman }) => matchesFilters(woman, filters) && matchesSearch(woman, query)), [scored, filters, query]);
+  useEffect(() => {
+    fetchMentors();
+  }, []);
 
-  const topMatches = scored.slice(0, 5);
+  const fetchMentors = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("is_mentor", true);
+
+      if (error) throw error;
+      setMentors(data || []);
+    } catch (err) {
+      console.error('Error fetching mentors:', err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fields = ["All Fields", ...new Set(mentors.map((m) => m.field).filter(Boolean))];
+
+  const filteredMentors = mentors.filter((m) => {
+    const matchesSearch =
+      (m.full_name && m.full_name.toLowerCase().includes(search.toLowerCase())) ||
+      (m.current_role && m.current_role.toLowerCase().includes(search.toLowerCase())) ||
+      (m.company && m.company.toLowerCase().includes(search.toLowerCase())) ||
+      (m.topics && m.topics.some((t) => t.toLowerCase().includes(search.toLowerCase())));
+
+    const matchesField = selectedField === "All Fields" || m.field === selectedField;
+
+    return matchesSearch && matchesField;
+  });
 
   return (
-    <div className="mx-auto max-w-5xl px-6 py-14 md:px-10">
-      <Reveal><NetworkHero profile={profile} matchCount={scored.filter((s) => s.match >= 70).length} /></Reveal>
+    <div className="min-h-screen px-6 py-14 md:px-10">
+      <div className="mx-auto max-w-5xl space-y-10">
+        <div className="nexa-panel relative overflow-hidden rounded-[var(--radius-xl)] p-8 md:p-10">
+          <div>
+            <div className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-[var(--accent-soft)] bg-[var(--surface-muted)] px-3 py-1 text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--accent-strong)" }}>
+              <Sparkles size={13} />
+              <span>Your network, your guide</span>
+            </div>
+            <h1 className="font-display text-[2.2rem] leading-tight md:text-[2.7rem]">
+              NEXA <span style={{ color: "var(--accent)" }}>Mentorship</span> Network
+            </h1>
+            <p className="mt-3 max-w-xl text-[14.5px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+              Connect with verified leaders, gain guidance, or support others in your journey.
+            </p>
+          </div>
 
-      <Reveal delay={60} className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <h2 className="font-display text-[1.5rem]">Strongest matches for you</h2>
-        <div className="flex items-center gap-4">
-          <button onClick={() => navigate("/nexa", { state: { entryContext: { type: "network" } } })} className="t-fast inline-flex items-center gap-1.5 text-[13px] font-semibold" style={{ color: "var(--accent-strong)" }}><Sparkles size={13} /> Ask NEXA who I should talk to</button>
-          <button onClick={() => navigate("/network/connections")} className="t-fast text-[13px] font-semibold" style={{ color: "var(--accent-strong)" }}>My connections & requests</button>
-        </div>
-      </Reveal>
-      <Reveal delay={100} className="mb-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {topMatches.map(({ woman, match }) => <WomanCard key={woman.id} woman={woman} match={match} />)}
-      </Reveal>
-
-      <Reveal delay={140}>
-        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="font-display text-[1.5rem]">Browse the network</h2>
-          <div className="flex flex-wrap items-center gap-2.5">
-            <div className="w-full sm:w-64"><NetworkSearch value={query} onChange={setQuery} /></div>
-            <button onClick={() => setFiltersOpen(true)} className="nexa-btn-secondary t-fast inline-flex items-center gap-1.5 rounded-full px-4 py-2.5 text-[13px] font-semibold">
-              <SlidersHorizontal size={14} /> Filters{activeNetworkFilterCount(filters) > 0 && ` (${activeNetworkFilterCount(filters)})`}
+          <div className="mt-7 flex flex-wrap items-center gap-3 md:absolute md:right-10 md:top-1/2 md:mt-0 md:-translate-y-1/2">
+            <button
+              onClick={() => navigate("/become-mentor")}
+              className="nexa-btn-primary t-fast inline-flex items-center rounded-full px-5 py-3 text-[13px] font-semibold"
+            >
+              Become a Mentor
+            </button>
+            <button
+              onClick={() => navigate("/mentorship-requests")}
+              className="nexa-btn-secondary t-fast inline-flex items-center rounded-full px-5 py-3 text-[13px] font-semibold"
+            >
+              My Requests
             </button>
           </div>
         </div>
-      </Reveal>
 
-      {filtered.length === 0 ? (
-        <Reveal>
-          <div className="nexa-card flex flex-col items-center gap-3 rounded-[var(--radius-lg)] p-10 text-center">
-            <Users size={22} style={{ color: "var(--text-tertiary)" }} />
-            <div className="text-[15px] font-semibold">Your network is still taking shape.</div>
-            <p className="text-[13.5px]" style={{ color: "var(--text-secondary)" }}>Try widening your interests or adding more things you can help with.</p>
-            <Button variant="secondary" onClick={() => { setFilters(emptyNetworkFilters()); setQuery(""); }}>Clear filters</Button>
-          </div>
-        </Reveal>
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map(({ woman, match }) => <WomanCard key={woman.id} woman={woman} match={match} />)}
+        <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+          <input
+            type="text"
+            placeholder="Search by field, topic, or mentor name..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="nexa-ai-input w-full rounded-full px-4 py-3 text-[13.5px] outline-none placeholder:text-[var(--text-tertiary)] sm:w-96"
+          />
+
+          <select
+            value={selectedField}
+            onChange={(e) => setSelectedField(e.target.value)}
+            className="nexa-btn-secondary w-full cursor-pointer rounded-full px-4 py-3 text-[13.5px] outline-none sm:w-48"
+          >
+            {fields.map((f) => (
+              <option key={f} value={f}>
+                {f}
+              </option>
+            ))}
+          </select>
         </div>
-      )}
 
-      <div className="mt-12 grid gap-6 md:grid-cols-2">
-        <Reveal><CommunitySuggestion /></Reveal>
-        <Reveal delay={60}><GiveBackCard /></Reveal>
+        {loading ? (
+          <div className="py-16 text-center text-[13.5px]" style={{ color: "var(--text-secondary)" }}>Loading mentors...</div>
+        ) : filteredMentors.length === 0 ? (
+          <div className="nexa-card rounded-[var(--radius-lg)] py-16 text-center text-[13.5px]" style={{ color: "var(--text-secondary)" }}>
+            No mentors found matching your criteria.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredMentors.map((mentor) => (
+              <MentorCard key={mentor.id} mentor={mentor} />
+            ))}
+          </div>
+        )}
       </div>
-
-      <NetworkFilters open={filtersOpen} onClose={() => setFiltersOpen(false)} filters={filters} setFilters={setFilters} />
     </div>
   );
 }
-
-

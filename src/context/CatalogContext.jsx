@@ -28,15 +28,17 @@ export function CatalogProvider({ children }) {
         setCommunities(cs);
       } else {
         // Offline fallback — dynamic import so these arrays aren't in the
-        // critical bundle path when a real backend is configured.
-        const [{ OPPORTUNITIES }, { WOMEN }, { COMMUNITIES }] = await Promise.all([
+        // critical bundle path when a real backend is configured. No
+        // mentors import here on purpose: there is no such thing as a
+        // sample person — offline mode shows zero mentors, same empty
+        // state production shows before anyone has signed up.
+        const [{ OPPORTUNITIES }, { COMMUNITIES }] = await Promise.all([
           import("../data/opportunities.js"),
-          import("../data/women.js"),
           import("../data/communities.js"),
         ]);
         if (!alive) return;
         setOpportunities(OPPORTUNITIES);
-        setMentors(WOMEN);
+        setMentors([]);
         setCommunities(COMMUNITIES);
       }
       setLoading(false);
@@ -65,6 +67,13 @@ export function CatalogProvider({ children }) {
         invalidateOpportunitiesCache();
         const opps = await fetchOpportunities();
         setOpportunities(opps);
+      },
+      // Called after a mentor profile is created/updated/deleted, or a
+      // discoverability toggle changes, so the directory reflects it live.
+      refreshMentors: async () => {
+        if (!isSupabaseConfigured()) return;
+        const ms = await fetchMentors();
+        setMentors(ms);
       },
     }),
     [opportunities, mentors, communities, loading]

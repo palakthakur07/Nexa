@@ -16,6 +16,7 @@ export function emptyProfile() {
     skills: [],
     priorities: [],
     onboardingComplete: false,
+    roles: ["member"],
     helpTopics: [],
     giveBack: null,
     customRoadmapItems: [],

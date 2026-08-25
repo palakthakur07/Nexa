@@ -4,7 +4,7 @@
 // module memory for the session.
 import { supabase, isSupabaseConfigured } from "./supabaseClient.js";
 import {
-  rowToOpportunity, rowToWoman, rowToCommunity,
+  rowToOpportunity, rowToMentor, mentorToRow, rowToCommunity,
   rowToOrganization, organizationToRow,
   rowToSource, sourceToRow,
   rowToNotification,
@@ -217,15 +217,52 @@ export async function updateNotificationPreferences(userId, prefs) {
 export async function fetchMentors() {
   if (_mentors) return _mentors;
   if (!isSupabaseConfigured()) return [];
-  const { data, error } = await supabase.from("mentors").select("*");
+  // RLS restricts this to discoverable=true rows (or your own, or admin) —
+  // no client-side filtering needed to keep non-consenting people out.
+  const { data, error } = await supabase.from("mentors").select("*").order("created_at", { ascending: false });
   if (error) { console.error("fetchMentors:", error.message); return []; }
-  _mentors = data.map(rowToWoman);
+  _mentors = data.map(rowToMentor);
   return _mentors;
 }
 
 export async function fetchMentor(id) {
   const all = await fetchMentors();
-  return all.find((m) => m.id === id) || null;
+  const cached = all.find((m) => m.id === id);
+  if (cached) return cached;
+  if (!isSupabaseConfigured()) return null;
+  const { data, error } = await supabase.from("mentors").select("*").eq("id", id).maybeSingle();
+  if (error || !data) return null;
+  return rowToMentor(data);
+}
+
+export async function fetchMyMentorProfile(userId) {
+  if (!isSupabaseConfigured() || !userId) return null;
+  const { data, error } = await supabase.from("mentors").select("*").eq("user_id", userId).maybeSingle();
+  if (error || !data) return null;
+  return rowToMentor(data);
+}
+
+export async function createMentorProfile(userId, mentor) {
+  if (!isSupabaseConfigured() || !userId) return null;
+  const { data, error } = await supabase.from("mentors").insert({ user_id: userId, ...mentorToRow(mentor) }).select().single();
+  if (error) throw error;
+  _mentors = null;
+  return rowToMentor(data);
+}
+
+export async function updateMentorProfile(mentorId, mentor) {
+  if (!isSupabaseConfigured()) return null;
+  const { data, error } = await supabase.from("mentors").update(mentorToRow(mentor)).eq("id", mentorId).select().single();
+  if (error) throw error;
+  _mentors = null;
+  return rowToMentor(data);
+}
+
+export async function deleteMentorProfile(mentorId) {
+  if (!isSupabaseConfigured()) return;
+  const { error } = await supabase.from("mentors").delete().eq("id", mentorId);
+  if (error) throw error;
+  _mentors = null;
 }
 
 export async function fetchCommunities() {
@@ -262,11 +299,20 @@ export async function setSavedStatus(userId, opportunityId, status) {
   await supabase.from("saved_opportunities").update({ status }).eq("user_id", userId).eq("opportunity_id", opportunityId);
 }
 
-// ---------- connection requests ----------
-export async function fetchRequests(userId) {
+// ---------- connection requests (real — see migrations/003_mentor_network.sql) ----------
+// Requests the signed-in user has SENT, as a member seeking guidance.
+export async function fetchSentRequests(userId) {
   if (!isSupabaseConfigured() || !userId) return [];
   const { data, error } = await supabase.from("connection_requests").select("*").eq("user_id", userId).order("created_at", { ascending: false });
-  if (error) { console.error("fetchRequests:", error.message); return []; }
+  if (error) { console.error("fetchSentRequests:", error.message); return []; }
+  return data;
+}
+
+// Requests directed at the mentor profile the signed-in user owns.
+export async function fetchReceivedRequests(mentorId) {
+  if (!isSupabaseConfigured() || !mentorId) return [];
+  const { data, error } = await supabase.from("connection_requests").select("*").eq("mentor_id", mentorId).order("created_at", { ascending: false });
+  if (error) { console.error("fetchReceivedRequests:", error.message); return []; }
   return data;
 }
 
@@ -275,7 +321,94 @@ export async function createRequest(userId, mentorId, { topic, requestType, mess
   const { data, error } = await supabase.from("connection_requests")
     .insert({ user_id: userId, mentor_id: mentorId, topic, request_type: requestType, message })
     .select().single();
-  if (error) { console.error("createRequest:", error.message); return null; }
+  // The trigger (rate limit / self-request / block / duplicate) raises a
+  // real Postgres exception, which surfaces here as error.message — thrown
+  // so the UI can show the actual reason instead of failing silently.
+  if (error) throw error;
+  return data;
+}
+
+export async function cancelRequest(requestId) {
+  if (!isSupabaseConfigured()) return;
+  const { error } = await supabase.from("connection_requests").update({ status: "cancelled" }).eq("id", requestId);
+  if (error) throw error;
+}
+
+export async function respondToRequest(requestId, accept) {
+  if (!isSupabaseConfigured()) return;
+  const { error } = await supabase.from("connection_requests").update({ status: accept ? "accepted" : "declined" }).eq("id", requestId);
+  if (error) throw error;
+}
+
+// ---------- connection messages (real — only exist once accepted) ----------
+export async function fetchConnectionMessages(connectionRequestId) {
+  if (!isSupabaseConfigured()) return [];
+  const { data, error } = await supabase.from("connection_messages").select("*").eq("connection_request_id", connectionRequestId).order("created_at", { ascending: true });
+  if (error) { console.error("fetchConnectionMessages:", error.message); return []; }
+  return data;
+}
+
+export async function sendConnectionMessage(connectionRequestId, senderId, body) {
+  if (!isSupabaseConfigured()) return null;
+  const { data, error } = await supabase.from("connection_messages")
+    .insert({ connection_request_id: connectionRequestId, sender_id: senderId, body })
+    .select().single();
+  if (error) throw error;
+  return data;
+}
+
+// ---------- ratings (real — only from an accepted, completed interaction) ----------
+export async function fetchMentorRatings(mentorId) {
+  if (!isSupabaseConfigured()) return [];
+  const { data, error } = await supabase.from("mentor_ratings").select("*").eq("mentor_id", mentorId).order("created_at", { ascending: false });
+  if (error) { console.error("fetchMentorRatings:", error.message); return []; }
+  return data;
+}
+
+// Bulk fetch for directory/list views — one query instead of N, grouped
+// client-side into { [mentorId]: { avg, count } }.
+export async function fetchRatingsSummary() {
+  if (!isSupabaseConfigured()) return {};
+  const { data, error } = await supabase.from("mentor_ratings").select("mentor_id, rating");
+  if (error) { console.error("fetchRatingsSummary:", error.message); return {}; }
+  const grouped = {};
+  for (const r of data) {
+    if (!grouped[r.mentor_id]) grouped[r.mentor_id] = { sum: 0, count: 0 };
+    grouped[r.mentor_id].sum += r.rating;
+    grouped[r.mentor_id].count += 1;
+  }
+  const summary = {};
+  for (const [id, { sum, count }] of Object.entries(grouped)) summary[id] = { avg: sum / count, count };
+  return summary;
+}
+
+export async function submitRating(connectionRequestId, mentorId, ratedBy, rating, feedback) {
+  if (!isSupabaseConfigured()) return null;
+  const { data, error } = await supabase.from("mentor_ratings")
+    .insert({ connection_request_id: connectionRequestId, mentor_id: mentorId, rated_by: ratedBy, rating, feedback })
+    .select().single();
+  if (error) throw error;
+  return data;
+}
+
+// ---------- block + report (real safety architecture) ----------
+export async function blockUser(blockerId, blockedId) {
+  if (!isSupabaseConfigured()) return;
+  const { error } = await supabase.from("blocks").insert({ blocker_id: blockerId, blocked_id: blockedId });
+  if (error) throw error;
+}
+
+export async function unblockUser(blockerId, blockedId) {
+  if (!isSupabaseConfigured()) return;
+  await supabase.from("blocks").delete().eq("blocker_id", blockerId).eq("blocked_id", blockedId);
+}
+
+export async function submitReport(reporterId, reportedUserId, reason, details, connectionRequestId = null) {
+  if (!isSupabaseConfigured()) return null;
+  const { data, error } = await supabase.from("reports")
+    .insert({ reporter_id: reporterId, reported_user_id: reportedUserId, reason, details, connection_request_id: connectionRequestId })
+    .select().single();
+  if (error) throw error;
   return data;
 }
 
