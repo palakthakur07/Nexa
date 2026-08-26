@@ -1,196 +1,114 @@
-// Maps between snake_case Supabase rows and the camelCase shapes the rest of
-// the app already expects (opportunities.js / women.js schemas), so no UI
-// component had to change its property names when data moved to the backend.
+import { createContext, useContext, useEffect, useMemo, useState, useCallback, useRef } from "react";
+import { useAuth } from "./AuthContext.jsx";
+import { supabase, isSupabaseConfigured } from "../lib/supabaseClient.js";
+import { rowToProfile, profileToRow } from "../lib/mappers.js";
 
-export function rowToCommunity(r) {
-  return { id: r.id, name: r.name, category: r.category, why: r.why };
-}
+const STORAGE_KEY = "nexa_profile_v1";
 
-export function rowToOpportunity(r) {
+export function emptyProfile() {
   return {
-    id: r.id,
-    title: r.title,
-    organization: r.organization,
-    type: r.type,
-    description: r.description,
-    location: r.location,
-    remote: r.remote,
-    categories: r.categories || [],
-    goals: r.goals || [],
-    careerStages: r.career_stages || [],
-    skills: r.skills || [],
-    funding: r.funding || { type: "", amount: null },
-    deadline: r.deadline,
-    eligibility: r.eligibility || [],
-    benefits: r.benefits || [],
-    applicationUrl: r.application_url || "#",
-    source: r.source,
-    verified: r.verified,
-    // ---- provenance + verification workflow (002_opportunity_engine.sql) ----
-    organizationId: r.organization_id || null,
-    submittedBy: r.submitted_by || null,
-    sourceType: r.source_type || "MANUAL",
-    sourceName: r.source_name || r.source || null,
-    sourceUrl: r.source_url || null,
-    // DRAFT | PENDING_REVIEW | VERIFIED | PUBLISHED | REJECTED | EXPIRED
-    verificationStatus: r.verification_status || (r.verified ? "PUBLISHED" : "DRAFT"),
-    verifiedAt: r.verified_at || null,
-    verifiedBy: r.verified_by || null,
-    lastVerifiedAt: r.last_verified_at || null,
-    publishedAt: r.published_at || null,
-    rejectionReason: r.rejection_reason || null,
+    name: "",
+    email: "",
+    photoUrl: "",
+    location: { country: "", city: "", openToRelocation: "" },
+    careerStage: "",
+    interests: [],
+    goals: [],
+    skills: [],
+    priorities: [],
+    onboardingComplete: false,
+    roles: ["member"],
+    helpTopics: [],
+    giveBack: null,
+    customRoadmapItems: [],
   };
 }
 
-export function rowToOrganization(r) {
-  return {
-    id: r.id,
-    ownerId: r.owner_id,
-    name: r.name || "",
-    website: r.website || "",
-    logoUrl: r.logo_url || "",
-    description: r.description || "",
-    orgType: r.org_type || "",
-    contactName: r.contact_name || "",
-    contactEmail: r.contact_email || "",
-    // UNVERIFIED | PENDING_VERIFICATION | VERIFIED | SUSPENDED
-    verificationStatus: r.verification_status || "UNVERIFIED",
-    verifiedAt: r.verified_at || null,
-    verifiedBy: r.verified_by || null,
-    createdAt: r.created_at,
-    updatedAt: r.updated_at,
-  };
+// Retained so the offline (no-Supabase) demo can still preload a filled
+// profile. With Supabase configured, real profiles come from the database.
+export const DEMO_PROFILE = {
+  ...emptyProfile(),
+  name: "Palak",
+  location: { country: "India", city: "Bengaluru", openToRelocation: "Yes" },
+  careerStage: "Student",
+  interests: ["AI & Technology", "Research"],
+  goals: ["Get a scholarship", "Study abroad"],
+  skills: ["Python", "AI/ML", "Research"],
+  priorities: ["Funding", "Mentorship"],
+  onboardingComplete: true,
+};
+
+function loadStoredProfile() {
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return emptyProfile();
+    const parsed = JSON.parse(raw);
+    return { ...emptyProfile(), ...parsed, location: { ...emptyProfile().location, ...(parsed.location || {}) } };
+  } catch {
+    return emptyProfile();
+  }
 }
 
-export function organizationToRow(o) {
-  return {
-    name: o.name,
-    website: o.website || null,
-    logo_url: o.logoUrl || null,
-    description: o.description || null,
-    org_type: o.orgType || null,
-    contact_name: o.contactName || null,
-    contact_email: o.contactEmail || null,
-  };
+const ProfileContext = createContext(null);
+
+export function ProfileProvider({ children }) {
+  const { user, configured } = useAuth();
+  const [profile, setProfile] = useState(configured ? emptyProfile : loadStoredProfile);
+  const [loaded, setLoaded] = useState(!configured);
+  const saveTimer = useRef(null);
+  const skipNextSave = useRef(true); // don't write back the row we just read
+
+  // ---- Supabase-backed: load this user's profile row ----
+  useEffect(() => {
+    if (!configured) return;
+    if (!user) { setProfile(emptyProfile()); setLoaded(true); return; }
+    let alive = true;
+    (async () => {
+      const { data, error } = await supabase.from("profiles").select("*").eq("id", user.id).single();
+      if (!alive) return;
+      if (error) {
+        console.error("load profile:", error.message);
+        setProfile({ ...emptyProfile(), email: user.email || "" });
+      } else {
+        skipNextSave.current = true;
+        setProfile(rowToProfile(data));
+      }
+      setLoaded(true);
+    })();
+    return () => { alive = false; };
+  }, [user, configured]);
+
+  // ---- Persist: Supabase (debounced) when signed in, else localStorage ----
+  useEffect(() => {
+    if (!configured) {
+      try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(profile)); } catch { /* ignore */ }
+      return;
+    }
+    if (!user || !loaded) return;
+    if (skipNextSave.current) { skipNextSave.current = false; return; }
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(async () => {
+      const { error } = await supabase.from("profiles").update(profileToRow(profile)).eq("id", user.id);
+      if (error) console.error("save profile:", error.message);
+    }, 500);
+    return () => saveTimer.current && clearTimeout(saveTimer.current);
+  }, [profile, user, configured, loaded]);
+
+  const loadDemo = useCallback(() => setProfile(DEMO_PROFILE), []);
+  const resetProfile = useCallback(() => setProfile((p) => ({ ...emptyProfile(), email: p.email })), []);
+  const addRoadmapItem = useCallback((label) => {
+    setProfile((p) => (p.customRoadmapItems.includes(label) ? p : { ...p, customRoadmapItems: [...p.customRoadmapItems, label] }));
+  }, []);
+
+  const value = useMemo(
+    () => ({ profile, setProfile, loadDemo, resetProfile, addRoadmapItem, profileLoaded: loaded }),
+    [profile, loadDemo, resetProfile, addRoadmapItem, loaded]
+  );
+  return <ProfileContext.Provider value={value}>{children}</ProfileContext.Provider>;
 }
 
-export function rowToSource(r) {
-  return {
-    id: r.id,
-    name: r.name,
-    website: r.website || "",
-    sourceUrl: r.source_url || "",
-    sourceType: r.source_type || "RSS",
-    method: r.method || "",
-    trustLevel: r.trust_level || "MEDIUM",
-    enabled: !!r.enabled,
-    refreshFrequency: r.refresh_frequency || "daily",
-    lastCheckedAt: r.last_checked_at || null,
-    lastSuccessAt: r.last_success_at || null,
-    lastError: r.last_error || null,
-    opportunitiesFound: r.opportunities_found || 0,
-    createdAt: r.created_at,
-    updatedAt: r.updated_at,
-  };
-}
-
-export function sourceToRow(s) {
-  return {
-    name: s.name,
-    website: s.website || null,
-    source_url: s.sourceUrl || null,
-    source_type: s.sourceType || "RSS",
-    method: s.method || null,
-    trust_level: s.trustLevel || "MEDIUM",
-    enabled: !!s.enabled,
-    refresh_frequency: s.refreshFrequency || "daily",
-  };
-}
-
-export function rowToNotification(r) {
-  return {
-    id: r.id,
-    type: r.type,
-    title: r.title,
-    body: r.body || "",
-    opportunityId: r.opportunity_id || null,
-    read: !!r.read,
-    createdAt: r.created_at,
-  };
-}
-
-// A real mentor row — every field here was typed in by the person it
-// describes, via the "Become a Mentor" form. No name/photo/bio here was
-// ever invented by the app.
-export function rowToMentor(r) {
-  return {
-    id: r.id,
-    userId: r.user_id,
-    name: r.name,
-    headline: r.headline,
-    location: r.location,
-    photoUrl: r.photo_url,
-    profession: r.profession,
-    industry: r.industry,
-    organization: r.organization,
-    about: r.about,
-    experience: r.experience || [],
-    skills: r.skills || [],
-    canHelpWith: r.can_help_with || [],
-    topics: r.topics || [],
-    languages: r.languages || [],
-    availability: r.availability,
-    experienceLevel: r.experience_level,
-    verified: r.verified,
-    discoverable: r.discoverable,
-  };
-}
-
-export function mentorToRow(m) {
-  return {
-    name: m.name, headline: m.headline, location: m.location, photo_url: m.photoUrl || null,
-    profession: m.profession, industry: m.industry, organization: m.organization, about: m.about,
-    experience: m.experience || [], skills: m.skills || [], can_help_with: m.canHelpWith || [],
-    topics: m.topics || [], languages: m.languages || [], availability: m.availability,
-    experience_level: m.experienceLevel, discoverable: m.discoverable !== false,
-  };
-}
-
-export function rowToProfile(r) {
-  return {
-    name: r.name || "",
-    email: r.email || "",
-    photoUrl: r.photo_url || "",
-    location: r.location || { country: "", city: "", openToRelocation: "" },
-    careerStage: r.career_stage || "",
-    interests: r.interests || [],
-    goals: r.goals || [],
-    skills: r.skills || [],
-    priorities: r.priorities || [],
-    helpTopics: r.help_topics || [],
-    giveBack: r.give_back || null,
-    customRoadmapItems: r.custom_roadmap_items || [],
-    onboardingComplete: Boolean(r.onboarding_complete),
-    isAdmin: Boolean(r.is_admin),
-    roles: r.roles || ["member"],
-  };
-}
-
-export function profileToRow(p) {
-  return {
-    name: p.name,
-    photo_url: p.photoUrl || null,
-    location: p.location,
-    career_stage: p.careerStage,
-    interests: p.interests,
-    goals: p.goals,
-    skills: p.skills,
-    priorities: p.priorities,
-    help_topics: p.helpTopics,
-    give_back: p.giveBack,
-    custom_roadmap_items: p.customRoadmapItems,
-    onboarding_complete: p.onboardingComplete,
-    roles: p.roles,
-    updated_at: new Date().toISOString(),
-  };
+export function useProfile() {
+  const ctx = useContext(ProfileContext);
+  if (!ctx) throw new Error("useProfile must be used inside <ProfileProvider>");
+  return ctx;
 }
