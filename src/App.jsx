@@ -38,6 +38,9 @@ import AdminOrganizations from "./pages/AdminOrganizations.jsx";
 import AdminSources from "./pages/AdminSources.jsx";
 import OrgSignup from "./pages/OrgSignup.jsx";
 import OrgDashboard from "./pages/OrgDashboard.jsx";
+import About from "./pages/About.jsx";
+import Privacy from "./pages/Privacy.jsx";
+import Terms from "./pages/Terms.jsx";
 
 
 // Small helpers to keep the route table readable.
@@ -61,6 +64,9 @@ function AnimatedRoutes() {
         <Route path="/reset-password" element={<P><ResetPassword /></P>} />
         <Route path="/auth/update-password" element={<P><UpdatePassword /></P>} />
         <Route path="/auth/callback" element={<AuthCallback />} />
+        <Route path="/about" element={<P><About /></P>} />
+        <Route path="/privacy" element={<P><Privacy /></P>} />
+        <Route path="/terms" element={<P><Terms /></P>} />
 
         {/* Onboarding is reachable right after signup */}
         <Route path="/onboarding" element={<Guard><Onboarding /></Guard>} />
@@ -122,4 +128,3 @@ export default function App() {
     </AuthProvider>
   );
 }
-
