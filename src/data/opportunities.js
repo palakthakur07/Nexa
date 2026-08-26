@@ -34,7 +34,7 @@ export const OPPORTUNITIES = [
     benefits: ["Full tuition and stipend", "Mentorship from senior researchers", "Publication support"],
     applicationUrl: "#",
     source: "Demo",
-    verified: true,
+    verified: false,
   },
   {
     id: "women-in-ai-scholarship",
@@ -54,7 +54,7 @@ export const OPPORTUNITIES = [
     benefits: ["Full tuition coverage", "Community of past scholars", "Annual summit invitation"],
     applicationUrl: "#",
     source: "Demo",
-    verified: true,
+    verified: false,
   },
   {
     id: "global-research-fellowship",
@@ -74,7 +74,7 @@ export const OPPORTUNITIES = [
     benefits: ["Full funding", "Institutional affiliation", "Publication mentorship"],
     applicationUrl: "#",
     source: "Demo",
-    verified: true,
+    verified: false,
   },
   {
     id: "future-leaders-program",
@@ -94,7 +94,7 @@ export const OPPORTUNITIES = [
     benefits: ["1:1 executive coaching", "Peer cohort", "Certificate of completion"],
     applicationUrl: "#",
     source: "Demo",
-    verified: true,
+    verified: false,
   },
   {
     id: "tech-returnship",
@@ -114,7 +114,7 @@ export const OPPORTUNITIES = [
     benefits: ["Paid 16-week program", "Mentorship", "Potential full-time conversion"],
     applicationUrl: "#",
     source: "Demo",
-    verified: true,
+    verified: false,
   },
   {
     id: "women-founders-grant",
@@ -134,7 +134,7 @@ export const OPPORTUNITIES = [
     benefits: ["$5,000 non-dilutive grant", "Founder community access", "Office hours with mentors"],
     applicationUrl: "#",
     source: "Demo",
-    verified: true,
+    verified: false,
   },
   {
     id: "design-product-internship",
@@ -154,7 +154,7 @@ export const OPPORTUNITIES = [
     benefits: ["Paid stipend", "Portfolio review", "Mentor pairing"],
     applicationUrl: "#",
     source: "Demo",
-    verified: true,
+    verified: false,
   },
   {
     id: "healthtech-accelerator",
@@ -174,7 +174,7 @@ export const OPPORTUNITIES = [
     benefits: ["Seed investment", "Clinical advisor network", "Demo day"],
     applicationUrl: "#",
     source: "Demo",
-    verified: true,
+    verified: false,
   },
   {
     id: "public-policy-fellowship",
@@ -194,7 +194,7 @@ export const OPPORTUNITIES = [
     benefits: ["Paid stipend", "Policy-writing workshops", "Alumni network"],
     applicationUrl: "#",
     source: "Demo",
-    verified: true,
+    verified: false,
   },
   {
     id: "stem-mentorship-circle",
@@ -214,7 +214,7 @@ export const OPPORTUNITIES = [
     benefits: ["1:1 mentorship", "Peer cohort events", "Career workshops"],
     applicationUrl: "#",
     source: "Demo",
-    verified: true,
+    verified: false,
   },
   {
     id: "founders-pitch-competition",
@@ -234,7 +234,7 @@ export const OPPORTUNITIES = [
     benefits: ["Cash prizes", "Investor introductions", "Media coverage"],
     applicationUrl: "#",
     source: "Demo",
-    verified: true,
+    verified: false,
   },
   {
     id: "early-career-data-fellowship",
@@ -254,7 +254,7 @@ export const OPPORTUNITIES = [
     benefits: ["Paid placement", "Nonprofit partner network", "Skills certification"],
     applicationUrl: "#",
     source: "Demo",
-    verified: true,
+    verified: false,
   },
   {
     id: "creative-leadership-grant",
@@ -274,7 +274,7 @@ export const OPPORTUNITIES = [
     benefits: ["Grant funding", "Leadership coaching", "Studio community access"],
     applicationUrl: "#",
     source: "Demo",
-    verified: true,
+    verified: false,
   },
   {
     id: "return-to-finance-program",
@@ -294,7 +294,7 @@ export const OPPORTUNITIES = [
     benefits: ["Flexible hours", "Paid role", "Return-to-work coaching"],
     applicationUrl: "#",
     source: "Demo",
-    verified: true,
+    verified: false,
   },
   {
     id: "education-innovation-fellowship",
@@ -314,7 +314,7 @@ export const OPPORTUNITIES = [
     benefits: ["Full funding", "Global cohort", "Publication opportunity"],
     applicationUrl: "#",
     source: "Demo",
-    verified: true,
+    verified: false,
   },
   {
     id: "media-storytelling-lab",
@@ -334,7 +334,7 @@ export const OPPORTUNITIES = [
     benefits: ["Mentor feedback", "Peer showcase", "Distribution support"],
     applicationUrl: "#",
     source: "Demo",
-    verified: true,
+    verified: false,
   },
   {
     id: "law-access-scholarship",
@@ -354,7 +354,7 @@ export const OPPORTUNITIES = [
     benefits: ["Full tuition", "Bar exam prep stipend", "Mentor network"],
     applicationUrl: "#",
     source: "Demo",
-    verified: true,
+    verified: false,
   },
   {
     id: "archived-summer-fellowship",
@@ -374,6 +374,6 @@ export const OPPORTUNITIES = [
     benefits: ["N/A — applications closed"],
     applicationUrl: "#",
     source: "Demo",
-    verified: true,
+    verified: false,
   },
 ];

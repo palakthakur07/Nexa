@@ -1,17 +1,24 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
+import { useProfile } from "../context/ProfileContext.jsx";
 
 // OAuth / email-verification landing. Supabase parses the URL hash into a
-// session (detectSessionInUrl), then we route based on onboarding state.
+// session (detectSessionInUrl), then we route based on onboarding state —
+// waiting for the profile row to load too, not just the session, so a
+// brand-new Google sign-up lands on /onboarding instead of skipping
+// straight to an empty dashboard.
 export default function AuthCallback() {
   const { user, loading } = useAuth();
+  const { profile, profileLoaded } = useProfile();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (loading) return;
-    navigate(user ? "/dashboard" : "/login", { replace: true });
-  }, [user, loading, navigate]);
+    if (!user) { navigate("/login", { replace: true }); return; }
+    if (!profileLoaded) return;
+    navigate(profile.onboardingComplete ? "/dashboard" : "/onboarding", { replace: true });
+  }, [user, loading, profileLoaded, profile.onboardingComplete, navigate]);
 
   return (
     <div className="flex min-h-[calc(100vh-72px)] items-center justify-center">

@@ -391,6 +391,19 @@ export async function submitRating(connectionRequestId, mentorId, ratedBy, ratin
   return data;
 }
 
+// Bulk name lookup for a set of user ids — used to label "received"
+// connection requests with the requester's display name without a
+// separate round trip per row.
+export async function fetchProfileNamesByIds(userIds) {
+  if (!isSupabaseConfigured() || !userIds || userIds.length === 0) return {};
+  const unique = [...new Set(userIds)];
+  const { data, error } = await supabase.from("profiles").select("id, name").in("id", unique);
+  if (error) { console.error("fetchProfileNamesByIds:", error.message); return {}; }
+  const map = {};
+  for (const row of data) map[row.id] = row.name || "NEXA member";
+  return map;
+}
+
 // ---------- block + report (real safety architecture) ----------
 export async function blockUser(blockerId, blockedId) {
   if (!isSupabaseConfigured()) return;

@@ -11,6 +11,7 @@ export default function Signup() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
@@ -19,6 +20,7 @@ export default function Signup() {
     e.preventDefault();
     setError(""); setNotice("");
     if (password.length < 6) { setError("Password must be at least 6 characters."); return; }
+    if (password !== confirmPassword) { setError("Passwords don't match."); return; }
     setBusy(true);
     const { data, error } = await signUp(email, password, name);
     setBusy(false);
@@ -46,6 +48,7 @@ export default function Signup() {
         <AuthField label="Your name" type="text" required value={name} onChange={(e) => setName(e.target.value)} placeholder="Palak" autoComplete="name" />
         <AuthField label="Email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" autoComplete="email" />
         <AuthField label="Password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 6 characters" autoComplete="new-password" />
+        <AuthField label="Confirm password" type="password" required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Re-enter your password" autoComplete="new-password" />
         <div className="mt-2 flex justify-center">
           <Button type="submit" variant="primary" size="lg" icon={ArrowRight} iconRight disabled={busy || !configured}>
             {busy ? "Creating…" : "Create account"}

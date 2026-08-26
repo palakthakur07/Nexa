@@ -35,6 +35,38 @@ export default function Profile() {
         </div>
 
         <div>
+          <div className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--accent-strong)" }}>Location</div>
+          <div className="mt-2 grid gap-2 sm:grid-cols-2">
+            <div className="nexa-card rounded-[var(--radius-md)] p-4">
+              <label className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--text-tertiary)" }}>Country</label>
+              <input
+                value={profile.location.country}
+                onChange={(e) => update({ location: { ...profile.location, country: e.target.value } })}
+                placeholder="e.g. India"
+                className="mt-1.5 w-full border-0 bg-transparent text-[15px] outline-none"
+              />
+            </div>
+            <div className="nexa-card rounded-[var(--radius-md)] p-4">
+              <label className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--text-tertiary)" }}>City</label>
+              <input
+                value={profile.location.city}
+                onChange={(e) => update({ location: { ...profile.location, city: e.target.value } })}
+                placeholder="e.g. Bengaluru"
+                className="mt-1.5 w-full border-0 bg-transparent text-[15px] outline-none"
+              />
+            </div>
+          </div>
+          <div className="mt-3">
+            <div className="text-[13px] font-medium" style={{ color: "var(--text-secondary)" }}>Willing to explore opportunities elsewhere?</div>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {["Yes", "No", "Online only"].map((o) => (
+                <Chip key={o} selected={profile.location.openToRelocation === o} onClick={() => update({ location: { ...profile.location, openToRelocation: o } })}>{o}</Chip>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div>
           <div className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--accent-strong)" }}>Career</div>
           <div className="mt-2 grid gap-2 sm:grid-cols-2">
             {CAREER_STAGES.map((o) => <SelectCard key={o} label={o} selected={profile.careerStage === o} onClick={() => update({ careerStage: o })} />)}

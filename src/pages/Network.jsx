@@ -1,50 +1,38 @@
-import React, { useState, useEffect } from "react";
+import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Sparkles } from "lucide-react";
-import { supabase } from "../lib/supabaseClient";
-import MentorCard from "../components/network/MentorCard";
+import MentorCard from "../components/network/MentorCard.jsx";
+import { useCatalog } from "../context/CatalogContext.jsx";
 
+// Real mentor directory, backed by the `mentors` table (see
+// migrations/003_mentor_network.sql) via CatalogContext — the same table
+// MentorDetail, BecomeMentor, and ConnectionsContext use. Previously this
+// page queried profiles.is_mentor from an abandoned schema branch that
+// nothing else in the app wrote to, so it was always empty in practice.
 export default function Network() {
   const navigate = useNavigate();
-  const [mentors, setMentors] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
+  const { mentors, loading } = useCatalog();
+  const [search, setSearch] = useState("");
   const [selectedField, setSelectedField] = useState("All Fields");
 
-  useEffect(() => {
-    fetchMentors();
-  }, []);
+  const fields = useMemo(
+    () => ["All Fields", ...new Set(mentors.map((m) => m.industry).filter(Boolean))],
+    [mentors]
+  );
 
-  const fetchMentors = async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("is_mentor", true);
-
-      if (error) throw error;
-      setMentors(data || []);
-    } catch (err) {
-      console.error('Error fetching mentors:', err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fields = ["All Fields", ...new Set(mentors.map((m) => m.field).filter(Boolean))];
-
-  const filteredMentors = mentors.filter((m) => {
-    const matchesSearch =
-      (m.full_name && m.full_name.toLowerCase().includes(search.toLowerCase())) ||
-      (m.current_role && m.current_role.toLowerCase().includes(search.toLowerCase())) ||
-      (m.company && m.company.toLowerCase().includes(search.toLowerCase())) ||
-      (m.topics && m.topics.some((t) => t.toLowerCase().includes(search.toLowerCase())));
-
-    const matchesField = selectedField === "All Fields" || m.field === selectedField;
-
-    return matchesSearch && matchesField;
-  });
+  const filteredMentors = useMemo(() => {
+    const q = search.toLowerCase();
+    return mentors.filter((m) => {
+      const matchesSearch =
+        !q ||
+        (m.name && m.name.toLowerCase().includes(q)) ||
+        (m.profession && m.profession.toLowerCase().includes(q)) ||
+        (m.organization && m.organization.toLowerCase().includes(q)) ||
+        (m.topics && m.topics.some((t) => t.toLowerCase().includes(q)));
+      const matchesField = selectedField === "All Fields" || m.industry === selectedField;
+      return matchesSearch && matchesField;
+    });
+  }, [mentors, search, selectedField]);
 
   return (
     <div className="min-h-screen px-6 py-14 md:px-10">
@@ -64,16 +52,10 @@ export default function Network() {
           </div>
 
           <div className="mt-7 flex flex-wrap items-center gap-3 md:absolute md:right-10 md:top-1/2 md:mt-0 md:-translate-y-1/2">
-            <button
-              onClick={() => navigate("/become-mentor")}
-              className="nexa-btn-primary t-fast inline-flex items-center rounded-full px-5 py-3 text-[13px] font-semibold"
-            >
+            <button onClick={() => navigate("/become-mentor")} className="nexa-btn-primary t-fast inline-flex items-center rounded-full px-5 py-3 text-[13px] font-semibold">
               Become a Mentor
             </button>
-            <button
-              onClick={() => navigate("/mentorship-requests")}
-              className="nexa-btn-secondary t-fast inline-flex items-center rounded-full px-5 py-3 text-[13px] font-semibold"
-            >
+            <button onClick={() => navigate("/requests")} className="nexa-btn-secondary t-fast inline-flex items-center rounded-full px-5 py-3 text-[13px] font-semibold">
               My Requests
             </button>
           </div>
@@ -87,17 +69,12 @@ export default function Network() {
             onChange={(e) => setSearch(e.target.value)}
             className="nexa-ai-input w-full rounded-full px-4 py-3 text-[13.5px] outline-none placeholder:text-[var(--text-tertiary)] sm:w-96"
           />
-
           <select
             value={selectedField}
             onChange={(e) => setSelectedField(e.target.value)}
             className="nexa-btn-secondary w-full cursor-pointer rounded-full px-4 py-3 text-[13.5px] outline-none sm:w-48"
           >
-            {fields.map((f) => (
-              <option key={f} value={f}>
-                {f}
-              </option>
-            ))}
+            {fields.map((f) => <option key={f} value={f}>{f}</option>)}
           </select>
         </div>
 
@@ -105,13 +82,13 @@ export default function Network() {
           <div className="py-16 text-center text-[13.5px]" style={{ color: "var(--text-secondary)" }}>Loading mentors...</div>
         ) : filteredMentors.length === 0 ? (
           <div className="nexa-card rounded-[var(--radius-lg)] py-16 text-center text-[13.5px]" style={{ color: "var(--text-secondary)" }}>
-            No mentors found matching your criteria.
+            {mentors.length === 0
+              ? "No mentors have registered yet — be the first to become a mentor."
+              : "No mentors found matching your criteria."}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredMentors.map((mentor) => (
-              <MentorCard key={mentor.id} mentor={mentor} />
-            ))}
+            {filteredMentors.map((mentor) => <MentorCard key={mentor.id} mentor={mentor} />)}
           </div>
         )}
       </div>

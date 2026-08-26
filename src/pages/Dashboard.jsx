@@ -37,12 +37,7 @@ export default function Dashboard() {
   const topMentors = useMemo(
     () =>
       mentors
-        .filter(
-          (m) =>
-            m &&
-            (m.full_name || m.name) &&
-            (m.current_role || m.role)
-        )
+        .filter((m) => m && m.name)
         .map((m) => ({
           mentor: m,
           match: calculateMentorMatchScore(profile, m),

@@ -12,6 +12,7 @@ import ProtectedRoute from "./components/auth/ProtectedRoute.jsx";
 import AdminRoute from "./components/auth/AdminRoute.jsx";
 import PageTransition from "./components/motion/PageTransition.jsx";
 import NavBar from "./components/NavBar.jsx";
+import DemoModeBanner from "./components/DemoModeBanner.jsx";
 import NexaDrawer from "./components/NexaDrawer.jsx";
 import Landing from "./pages/Landing.jsx";
 import Login from "./pages/Login.jsx";
@@ -106,6 +107,7 @@ export default function App() {
                 <ConversationsProvider>
                   <NexaDrawerProvider>
                     <div id="nexa-app" style={{ minHeight: "100%" }}>
+                      <DemoModeBanner />
                       <NavBar />
                       <AnimatedRoutes />
                       <NexaDrawer />
