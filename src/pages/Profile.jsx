@@ -100,7 +100,7 @@ export default function Profile() {
           <div className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--accent-strong)" }}>Personal</div>
           <div className="nexa-card mt-2 rounded-[var(--radius-md)] p-4">
             <label className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--text-tertiary)" }}>First name</label>
-            <input value={profile.name} onChange={(e) => update({ name: e.target.value })} className="mt-1.5 w-full border-0 bg-transparent text-[15px] outline-none" />
+            <input value={profile.name} onChange={(e) => update({ name: e.target.value })} placeholder="e.g. Priya" className="mt-1.5 w-full border-0 bg-transparent text-[15px] outline-none" />
           </div>
         </div>
 
