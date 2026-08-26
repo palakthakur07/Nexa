@@ -4,7 +4,7 @@ import { useAuth } from "../context/AuthContext.jsx";
 import { useProfile } from "../context/ProfileContext.jsx";
 import { useCatalog } from "../context/CatalogContext.jsx";
 import { supabase } from "../lib/supabaseClient.js";
-import { fetchMyMentorProfile, createMentorProfile, updateMentorProfile } from "../lib/dataService.js";
+import { fetchMyMentorProfile, createMentorProfile, updateMentorProfile, syncProfilePhoto } from "../lib/dataService.js";
 
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024; // 5MB
 
@@ -58,10 +58,13 @@ export default function BecomeMentor() {
         });
       } else {
         setFormData((f) => ({ ...f, name: profile.name || "" }));
+        // No mentor row yet — default the photo to whatever's already on
+        // their account profile so they don't have to upload it twice.
+        if (profile.photoUrl) setPhotoUrl(profile.photoUrl);
       }
       setChecking(false);
     });
-  }, [user, profile.name]);
+  }, [user, profile.name, profile.photoUrl]);
 
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
@@ -88,6 +91,7 @@ export default function BecomeMentor() {
       if (uploadError) throw uploadError;
       const { data } = supabase.storage.from("mentor-photos").getPublicUrl(path);
       setPhotoUrl(data.publicUrl);
+      await syncProfilePhoto(user.id, data.publicUrl);
     } catch (err) {
       console.error("Error uploading photo:", err.message);
       setErrorMsg(err.message || "Failed to upload photo.");

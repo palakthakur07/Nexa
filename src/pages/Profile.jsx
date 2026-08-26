@@ -1,112 +1,196 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Sparkles } from "lucide-react";
-import Button from "../components/ui/Button.jsx";
-import Chip from "../components/ui/Chip.jsx";
-import SelectCard from "../components/ui/SelectCard.jsx";
-import { useProfile } from "../context/ProfileContext.jsx";
-import { CAREER_STAGES, INTERESTS, GOALS, SKILL_SUGGESTIONS, PRIORITIES } from "../data/onboardingOptions.js";
-import { HELP_TYPES } from "../data/networkOptions.js";
+// Maps between snake_case Supabase rows and the camelCase shapes the rest of
+// the app already expects (opportunities.js / women.js schemas), so no UI
+// component had to change its property names when data moved to the backend.
 
-export default function Profile() {
-  const { profile, setProfile } = useProfile();
-  const navigate = useNavigate();
-  const [saved, setSaved] = useState(false);
+export function rowToCommunity(r) {
+  return { id: r.id, name: r.name, category: r.category, why: r.why };
+}
 
-  const update = (patch) => setProfile((p) => ({ ...p, ...patch }));
-  const toggleIn = (field, val) => setProfile((p) => ({ ...p, [field]: p[field].includes(val) ? p[field].filter((v) => v !== val) : [...p[field], val] }));
-  const save = () => { setSaved(true); setTimeout(() => setSaved(false), 2200); };
+export function rowToOpportunity(r) {
+  return {
+    id: r.id,
+    title: r.title,
+    organization: r.organization,
+    type: r.type,
+    description: r.description,
+    location: r.location,
+    remote: r.remote,
+    categories: r.categories || [],
+    goals: r.goals || [],
+    careerStages: r.career_stages || [],
+    skills: r.skills || [],
+    funding: r.funding || { type: "", amount: null },
+    deadline: r.deadline,
+    eligibility: r.eligibility || [],
+    benefits: r.benefits || [],
+    applicationUrl: r.application_url || "#",
+    source: r.source,
+    verified: r.verified,
+    // ---- provenance + verification workflow (002_opportunity_engine.sql) ----
+    organizationId: r.organization_id || null,
+    submittedBy: r.submitted_by || null,
+    sourceType: r.source_type || "MANUAL",
+    sourceName: r.source_name || r.source || null,
+    sourceUrl: r.source_url || null,
+    // DRAFT | PENDING_REVIEW | VERIFIED | PUBLISHED | REJECTED | EXPIRED
+    verificationStatus: r.verification_status || (r.verified ? "PUBLISHED" : "DRAFT"),
+    verifiedAt: r.verified_at || null,
+    verifiedBy: r.verified_by || null,
+    lastVerifiedAt: r.last_verified_at || null,
+    publishedAt: r.published_at || null,
+    rejectionReason: r.rejection_reason || null,
+  };
+}
 
-  return (
-    <div className="mx-auto max-w-3xl px-6 py-14 md:px-10">
-      <button onClick={() => navigate("/dashboard")} className="t-fast inline-flex items-center gap-1.5 text-[13px] font-semibold" style={{ color: "var(--text-secondary)" }}>
-        <ArrowLeft size={14} /> Back to dashboard
-      </button>
-      <h1 className="font-display mt-4 text-[2.2rem]">Your profile</h1>
-      <p className="mt-1 text-[14px]" style={{ color: "var(--text-secondary)" }}>This is what NEXA uses to personalize your dashboard.</p>
+export function rowToOrganization(r) {
+  return {
+    id: r.id,
+    ownerId: r.owner_id,
+    name: r.name || "",
+    website: r.website || "",
+    logoUrl: r.logo_url || "",
+    description: r.description || "",
+    orgType: r.org_type || "",
+    contactName: r.contact_name || "",
+    contactEmail: r.contact_email || "",
+    // UNVERIFIED | PENDING_VERIFICATION | VERIFIED | SUSPENDED
+    verificationStatus: r.verification_status || "UNVERIFIED",
+    verifiedAt: r.verified_at || null,
+    verifiedBy: r.verified_by || null,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
+}
 
-      <div className="mt-8 space-y-8">
-        <div>
-          <div className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--accent-strong)" }}>Personal</div>
-          <div className="nexa-card mt-2 rounded-[var(--radius-md)] p-4">
-            <label className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--text-tertiary)" }}>First name</label>
-            <input value={profile.name} onChange={(e) => update({ name: e.target.value })} className="mt-1.5 w-full border-0 bg-transparent text-[15px] outline-none" />
-          </div>
-        </div>
+export function organizationToRow(o) {
+  return {
+    name: o.name,
+    website: o.website || null,
+    logo_url: o.logoUrl || null,
+    description: o.description || null,
+    org_type: o.orgType || null,
+    contact_name: o.contactName || null,
+    contact_email: o.contactEmail || null,
+  };
+}
 
-        <div>
-          <div className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--accent-strong)" }}>Location</div>
-          <div className="mt-2 grid gap-2 sm:grid-cols-2">
-            <div className="nexa-card rounded-[var(--radius-md)] p-4">
-              <label className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--text-tertiary)" }}>Country</label>
-              <input
-                value={profile.location.country}
-                onChange={(e) => update({ location: { ...profile.location, country: e.target.value } })}
-                placeholder="e.g. India"
-                className="mt-1.5 w-full border-0 bg-transparent text-[15px] outline-none"
-              />
-            </div>
-            <div className="nexa-card rounded-[var(--radius-md)] p-4">
-              <label className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--text-tertiary)" }}>City</label>
-              <input
-                value={profile.location.city}
-                onChange={(e) => update({ location: { ...profile.location, city: e.target.value } })}
-                placeholder="e.g. Bengaluru"
-                className="mt-1.5 w-full border-0 bg-transparent text-[15px] outline-none"
-              />
-            </div>
-          </div>
-          <div className="mt-3">
-            <div className="text-[13px] font-medium" style={{ color: "var(--text-secondary)" }}>Willing to explore opportunities elsewhere?</div>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {["Yes", "No", "Online only"].map((o) => (
-                <Chip key={o} selected={profile.location.openToRelocation === o} onClick={() => update({ location: { ...profile.location, openToRelocation: o } })}>{o}</Chip>
-              ))}
-            </div>
-          </div>
-        </div>
+export function rowToSource(r) {
+  return {
+    id: r.id,
+    name: r.name,
+    website: r.website || "",
+    sourceUrl: r.source_url || "",
+    sourceType: r.source_type || "RSS",
+    method: r.method || "",
+    trustLevel: r.trust_level || "MEDIUM",
+    enabled: !!r.enabled,
+    refreshFrequency: r.refresh_frequency || "daily",
+    lastCheckedAt: r.last_checked_at || null,
+    lastSuccessAt: r.last_success_at || null,
+    lastError: r.last_error || null,
+    opportunitiesFound: r.opportunities_found || 0,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
+}
 
-        <div>
-          <div className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--accent-strong)" }}>Career</div>
-          <div className="mt-2 grid gap-2 sm:grid-cols-2">
-            {CAREER_STAGES.map((o) => <SelectCard key={o} label={o} selected={profile.careerStage === o} onClick={() => update({ careerStage: o })} />)}
-          </div>
-        </div>
+export function sourceToRow(s) {
+  return {
+    name: s.name,
+    website: s.website || null,
+    source_url: s.sourceUrl || null,
+    source_type: s.sourceType || "RSS",
+    method: s.method || null,
+    trust_level: s.trustLevel || "MEDIUM",
+    enabled: !!s.enabled,
+    refresh_frequency: s.refreshFrequency || "daily",
+  };
+}
 
-        <div>
-          <div className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--accent-strong)" }}>Interests</div>
-          <div className="mt-2 flex flex-wrap gap-2">{INTERESTS.map((o) => <Chip key={o} selected={profile.interests.includes(o)} onClick={() => toggleIn("interests", o)}>{o}</Chip>)}</div>
-        </div>
+export function rowToNotification(r) {
+  return {
+    id: r.id,
+    type: r.type,
+    title: r.title,
+    body: r.body || "",
+    opportunityId: r.opportunity_id || null,
+    read: !!r.read,
+    createdAt: r.created_at,
+  };
+}
 
-        <div>
-          <div className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--accent-strong)" }}>Goals</div>
-          <div className="mt-2 flex flex-wrap gap-2">{GOALS.map((o) => <Chip key={o} selected={profile.goals.includes(o)} onClick={() => toggleIn("goals", o)}>{o}</Chip>)}</div>
-        </div>
+// A real mentor row — every field here was typed in by the person it
+// describes, via the "Become a Mentor" form. No name/photo/bio here was
+// ever invented by the app.
+export function rowToMentor(r) {
+  return {
+    id: r.id,
+    userId: r.user_id,
+    name: r.name,
+    headline: r.headline,
+    location: r.location,
+    photoUrl: r.photo_url,
+    profession: r.profession,
+    industry: r.industry,
+    organization: r.organization,
+    about: r.about,
+    experience: r.experience || [],
+    skills: r.skills || [],
+    canHelpWith: r.can_help_with || [],
+    topics: r.topics || [],
+    languages: r.languages || [],
+    availability: r.availability,
+    experienceLevel: r.experience_level,
+    verified: r.verified,
+    discoverable: r.discoverable,
+  };
+}
 
-        <div>
-          <div className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--accent-strong)" }}>Skills</div>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {[...new Set([...SKILL_SUGGESTIONS, ...profile.skills])].map((o) => <Chip key={o} selected={profile.skills.includes(o)} onClick={() => toggleIn("skills", o)}>{o}</Chip>)}
-          </div>
-        </div>
+export function mentorToRow(m) {
+  return {
+    name: m.name, headline: m.headline, location: m.location, photo_url: m.photoUrl || null,
+    profession: m.profession, industry: m.industry, organization: m.organization, about: m.about,
+    experience: m.experience || [], skills: m.skills || [], can_help_with: m.canHelpWith || [],
+    topics: m.topics || [], languages: m.languages || [], availability: m.availability,
+    experience_level: m.experienceLevel, discoverable: m.discoverable !== false,
+  };
+}
 
-        <div>
-          <div className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--accent-strong)" }}>Priorities</div>
-          <div className="mt-2 flex flex-wrap gap-2">{PRIORITIES.map((o) => <Chip key={o} selected={profile.priorities.includes(o)} onClick={() => toggleIn("priorities", o)}>{o}</Chip>)}</div>
-        </div>
+export function rowToProfile(r) {
+  return {
+    name: r.name || "",
+    email: r.email || "",
+    photoUrl: r.photo_url || "",
+    location: r.location || { country: "", city: "", openToRelocation: "" },
+    careerStage: r.career_stage || "",
+    interests: r.interests || [],
+    goals: r.goals || [],
+    skills: r.skills || [],
+    priorities: r.priorities || [],
+    helpTopics: r.help_topics || [],
+    giveBack: r.give_back || null,
+    customRoadmapItems: r.custom_roadmap_items || [],
+    onboardingComplete: Boolean(r.onboarding_complete),
+    isAdmin: Boolean(r.is_admin),
+    roles: r.roles || ["member"],
+  };
+}
 
-        <div>
-          <div className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--accent-strong)" }}>What I can help with</div>
-          <p className="mt-1 text-[12.5px]" style={{ color: "var(--text-secondary)" }}>Optional — lets NEXA eventually suggest you to women exploring what you've already been through.</p>
-          <div className="mt-2 flex flex-wrap gap-2">{HELP_TYPES.map((o) => <Chip key={o} selected={profile.helpTopics.includes(o)} onClick={() => toggleIn("helpTopics", o)}>{o}</Chip>)}</div>
-        </div>
-      </div>
-
-      <div className="mt-10 flex flex-wrap items-center gap-3">
-        <Button variant="primary" onClick={save}>Save changes</Button>
-        {saved && <span className="text-[13px] font-medium" style={{ color: "var(--success)" }}>Profile updated.</span>}
-        <Button variant="ghost" icon={Sparkles} onClick={() => navigate("/nexa", { state: { entryContext: { type: "profile" } } })}>Ask NEXA about my next step</Button>
-      </div>
-    </div>
-  );
+export function profileToRow(p) {
+  return {
+    name: p.name,
+    photo_url: p.photoUrl || null,
+    location: p.location,
+    career_stage: p.careerStage,
+    interests: p.interests,
+    goals: p.goals,
+    skills: p.skills,
+    priorities: p.priorities,
+    help_topics: p.helpTopics,
+    give_back: p.giveBack,
+    custom_roadmap_items: p.customRoadmapItems,
+    onboarding_complete: p.onboardingComplete,
+    roles: p.roles,
+    updated_at: new Date().toISOString(),
+  };
 }
