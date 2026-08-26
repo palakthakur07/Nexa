@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useProfile } from "../context/ProfileContext.jsx";
+import { useCatalog } from "../context/CatalogContext.jsx";
 import { fetchMyMentorProfile, createMentorProfile, updateMentorProfile } from "../lib/dataService.js";
 
 // Registers (or edits) the signed-in user's row in the REAL mentors table
@@ -11,6 +12,7 @@ import { fetchMyMentorProfile, createMentorProfile, updateMentorProfile } from "
 export default function BecomeMentor() {
   const { user } = useAuth();
   const { profile } = useProfile();
+  const { refreshMentors } = useCatalog();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(true);
@@ -82,6 +84,7 @@ export default function BecomeMentor() {
       } else {
         await createMentorProfile(user.id, mentor);
       }
+      await refreshMentors();
       navigate("/network");
     } catch (err) {
       console.error("Error saving mentor profile:", err.message);
