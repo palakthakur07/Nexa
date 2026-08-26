@@ -9,7 +9,6 @@ export function emptyProfile() {
   return {
     name: "",
     email: "",
-    photoUrl: "",
     location: { country: "", city: "", openToRelocation: "" },
     careerStage: "",
     interests: [],
@@ -112,3 +111,4 @@ export function useProfile() {
   if (!ctx) throw new Error("useProfile must be used inside <ProfileProvider>");
   return ctx;
 }
+

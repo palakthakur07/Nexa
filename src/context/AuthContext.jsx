@@ -40,13 +40,9 @@ export function AuthProvider({ children }) {
 
   const signInWithGoogle = useCallback(async () => {
     if (!isSupabaseConfigured()) return { error: { message: "Supabase is not configured." } };
-    // Redirect to root, not /auth/callback: root always resolves as a real
-    // static file, so Google sign-in works even before a SPA-rewrite rule
-    // (vercel.json) is confirmed live. supabase-js still picks up the auth
-    // token from the URL hash on load either way (detectSessionInUrl: true).
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: window.location.origin },
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
     });
     return { data, error };
   }, []);
@@ -85,3 +81,4 @@ export function useAuth() {
   if (!ctx) throw new Error("useAuth must be used inside <AuthProvider>");
   return ctx;
 }
+

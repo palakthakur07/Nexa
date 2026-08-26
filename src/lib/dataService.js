@@ -8,6 +8,7 @@ import {
   rowToOrganization, organizationToRow,
   rowToSource, sourceToRow,
   rowToNotification,
+  rowToRoadmap, roadmapToRow,
 } from "./mappers.js";
 
 let _opportunities = null;
@@ -265,23 +266,6 @@ export async function deleteMentorProfile(mentorId) {
   _mentors = null;
 }
 
-// Keeps the account-level profile photo (profiles.photo_url) and the public
-// mentor listing photo (mentors.photo_url) in sync, so a user only has to
-// upload a photo once no matter which page they upload it from. No-ops
-// quietly if the user has no row in the other table yet.
-export async function syncProfilePhoto(userId, photoUrl) {
-  if (!isSupabaseConfigured() || !userId) return;
-  const { error } = await supabase.from("profiles").update({ photo_url: photoUrl || null }).eq("id", userId);
-  if (error) console.error("syncProfilePhoto (profiles):", error.message);
-}
-
-export async function syncMentorPhoto(userId, photoUrl) {
-  if (!isSupabaseConfigured() || !userId) return;
-  const { error } = await supabase.from("mentors").update({ photo_url: photoUrl || null }).eq("user_id", userId);
-  if (error) console.error("syncProfilePhoto (mentors):", error.message);
-  _mentors = null;
-}
-
 export async function fetchCommunities() {
   if (_communities) return _communities;
   if (!isSupabaseConfigured()) return [];
@@ -489,3 +473,27 @@ export async function deleteConversationRow(conversationId) {
   if (!isSupabaseConfigured()) return;
   await supabase.from("conversations").delete().eq("id", conversationId);
 }
+
+// ---------- roadmap (per user, RLS-scoped — see 006_roadmap.sql) ----------
+// Returns null when the user has no roadmap yet (not an error) — that's the
+// signal for the empty state, not a failed fetch.
+export async function fetchRoadmap(userId) {
+  if (!isSupabaseConfigured() || !userId) return null;
+  const { data, error } = await supabase.from("roadmaps").select("*").eq("user_id", userId).maybeSingle();
+  if (error) { console.error("fetchRoadmap:", error.message); return null; }
+  return rowToRoadmap(data);
+}
+
+// Upsert on user_id — one roadmap row per user. Used both for first
+// generation and for saving step-completion / regeneration.
+export async function saveRoadmap(userId, roadmap) {
+  if (!isSupabaseConfigured() || !userId) return null;
+  const { data, error } = await supabase
+    .from("roadmaps")
+    .upsert(roadmapToRow(userId, roadmap), { onConflict: "user_id" })
+    .select()
+    .single();
+  if (error) { console.error("saveRoadmap:", error.message); throw error; }
+  return rowToRoadmap(data);
+}
+

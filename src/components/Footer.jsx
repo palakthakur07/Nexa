@@ -15,11 +15,11 @@ export default function Footer() {
         </div>
         <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-[13px]" style={{ color: "var(--text-secondary)" }}>
           <button onClick={() => navigate("/discover")} className="nexa-nav-link t-fast">Discover</button>
-          <button onClick={() => navigate("/network")} className="nexa-nav-link t-fast">People</button>
+          <button onClick={() => navigate("/people")} className="nexa-nav-link t-fast">People</button>
           <a href="#how-it-works" className="nexa-nav-link t-fast">How it works</a>
-          <button onClick={() => navigate("/about")} className="nexa-nav-link t-fast">About</button>
-          <button onClick={() => navigate("/privacy")} className="nexa-nav-link t-fast">Privacy</button>
-          <button onClick={() => navigate("/terms")} className="nexa-nav-link t-fast">Terms</button>
+          <span className="nexa-nav-link">About</span>
+          <span className="nexa-nav-link">Privacy</span>
+          <span className="nexa-nav-link">Terms</span>
         </div>
       </div>
     </footer>

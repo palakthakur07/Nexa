@@ -156,11 +156,37 @@ export function mentorToRow(m) {
   };
 }
 
+export function rowToRoadmap(r) {
+  if (!r) return null;
+  return {
+    id: r.id,
+    userId: r.user_id,
+    goalKey: r.goal_key,
+    title: r.title,
+    description: r.description || "",
+    phases: r.phases || [],
+    sourceSnapshot: r.source_snapshot || null,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
+}
+
+export function roadmapToRow(userId, roadmap) {
+  return {
+    user_id: userId,
+    goal_key: roadmap.goalKey,
+    title: roadmap.title,
+    description: roadmap.description || "",
+    phases: roadmap.phases || [],
+    source_snapshot: roadmap.sourceSnapshot || null,
+    updated_at: new Date().toISOString(),
+  };
+}
+
 export function rowToProfile(r) {
   return {
     name: r.name || "",
     email: r.email || "",
-    photoUrl: r.photo_url || "",
     location: r.location || { country: "", city: "", openToRelocation: "" },
     careerStage: r.career_stage || "",
     interests: r.interests || [],
@@ -179,7 +205,6 @@ export function rowToProfile(r) {
 export function profileToRow(p) {
   return {
     name: p.name,
-    photo_url: p.photoUrl || null,
     location: p.location,
     career_stage: p.careerStage,
     interests: p.interests,
@@ -194,3 +219,4 @@ export function profileToRow(p) {
     updated_at: new Date().toISOString(),
   };
 }
+

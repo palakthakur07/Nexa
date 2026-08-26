@@ -8,6 +8,9 @@ export function generateSuggestedPrompts(profile, entryContext) {
   if (entryContext?.type === "woman") {
     return ["Why did you recommend her?", "What should I ask her?", "Who else could help me?", "Help me draft my request"];
   }
+  if (entryContext?.type === "roadmap") {
+    return ["Why is this my next step?", "How can I complete this faster?", "Find opportunities related to this phase", "What should I learn next?"];
+  }
 
   const prompts = ["What's my smartest next step?"];
 

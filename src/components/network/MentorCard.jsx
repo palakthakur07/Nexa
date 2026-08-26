@@ -20,10 +20,8 @@ export default function MentorCard({ mentor }) {
     <div className="bg-white border border-[#EFE8E2] rounded-3xl p-6 shadow-sm hover:shadow-md transition flex flex-col justify-between space-y-5">
       <div className="space-y-4">
         <div className="flex items-start gap-3.5">
-          <div className="w-12 h-12 rounded-full bg-[#F5E1E7] text-[#9E4B5E] flex items-center justify-center font-bold text-base shrink-0 border border-[#F2D7E0] overflow-hidden">
-            {mentor.photoUrl
-              ? <img src={mentor.photoUrl} alt={mentor.name || "Mentor"} className="w-full h-full object-cover" />
-              : getInitials(mentor.name)}
+          <div className="w-12 h-12 rounded-full bg-[#F5E1E7] text-[#9E4B5E] flex items-center justify-center font-bold text-base shrink-0 border border-[#F2D7E0]">
+            {getInitials(mentor.name)}
           </div>
           <div>
             <div className="flex items-center gap-2">

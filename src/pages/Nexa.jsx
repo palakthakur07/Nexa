@@ -13,6 +13,7 @@ import { useSaved } from "../context/SavedContext.jsx";
 import { useConnections } from "../context/ConnectionsContext.jsx";
 import { useConversations } from "../context/ConversationsContext.jsx";
 import { useCatalog } from "../context/CatalogContext.jsx";
+import { useRoadmap } from "../context/RoadmapContext.jsx";
 import { buildNexaContext } from "../lib/nexaContext.js";
 import { askNexa } from "../lib/nexaAIService.js";
 import { generateSuggestedPrompts } from "../lib/suggestedPrompts.js";
@@ -25,6 +26,7 @@ export default function Nexa() {
   const { sent: requests } = useConnections();
   const { conversations, activeId, setActiveId, createConversation, addMessage, deleteConversation, renameConversation } = useConversations();
   const { opportunities, mentors } = useCatalog();
+  const roadmapState = useRoadmap();
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [contextOpen, setContextOpen] = useState(false);
@@ -36,8 +38,8 @@ export default function Nexa() {
   const entryContext = active?.entryContext || null;
 
   const context = useMemo(
-    () => buildNexaContext({ profile, saved, requests, entryContext, opportunities, mentors }),
-    [profile, saved, requests, entryContext, opportunities, mentors]
+    () => buildNexaContext({ profile, saved, requests, entryContext, opportunities, mentors, roadmapState }),
+    [profile, saved, requests, entryContext, opportunities, mentors, roadmapState]
   );
 
   // Seed a conversation from router state (contextual entry from
@@ -48,7 +50,7 @@ export default function Nexa() {
     const incoming = location.state?.entryContext || null;
     if (incoming) {
       const id = createConversation(incoming);
-      const ctx = buildNexaContext({ profile, saved, requests, entryContext: incoming, opportunities, mentors });
+      const ctx = buildNexaContext({ profile, saved, requests, entryContext: incoming, opportunities, mentors, roadmapState });
       setThinking(true);
       askNexa("", ctx, []).then((res) => {
         addMessage(id, { id: `m-${Date.now()}`, role: "nexa", content: res.content, actions: res.actions, createdAt: new Date().toISOString() });
@@ -88,7 +90,7 @@ export default function Nexa() {
       case "OPEN_NETWORK": navigate("/network"); return null;
       case "OPEN_PROFILE": navigate("/profile"); return null;
       case "VIEW_SAVED": navigate("/saved"); return null;
-      case "VIEW_ROADMAP": navigate("/dashboard"); return null;
+      case "VIEW_ROADMAP": navigate("/roadmap"); return null;
       case "SAVE_OPPORTUNITY": toggleSave(action.payload.id); return "Saved to your opportunities.";
       case "ADD_TO_ROADMAP": addRoadmapItem(action.payload.label); return "Added to your roadmap.";
       case "RETRY": {

@@ -7,6 +7,7 @@ import { NexaDrawerProvider } from "./context/NexaDrawerContext.jsx";
 import { SavedProvider } from "./context/SavedContext.jsx";
 import { ConnectionsProvider } from "./context/ConnectionsContext.jsx";
 import { ConversationsProvider } from "./context/ConversationsContext.jsx";
+import { RoadmapProvider } from "./context/RoadmapContext.jsx";
 import { OrganizationProvider } from "./context/OrganizationContext.jsx";
 import ProtectedRoute from "./components/auth/ProtectedRoute.jsx";
 import AdminRoute from "./components/auth/AdminRoute.jsx";
@@ -32,15 +33,12 @@ import MentorDetail from "./pages/MentorDetail.jsx";
 import BecomeMentor from "./pages/BecomeMentor.jsx";
 import Requests from "./pages/Requests.jsx";
 import Nexa from "./pages/Nexa.jsx";
-import PlaceholderRoute from "./pages/PlaceholderRoute.jsx";
+import Roadmap from "./pages/Roadmap.jsx";
 import AdminOpportunities from "./pages/AdminOpportunities.jsx";
 import AdminOrganizations from "./pages/AdminOrganizations.jsx";
 import AdminSources from "./pages/AdminSources.jsx";
 import OrgSignup from "./pages/OrgSignup.jsx";
 import OrgDashboard from "./pages/OrgDashboard.jsx";
-import About from "./pages/About.jsx";
-import Privacy from "./pages/Privacy.jsx";
-import Terms from "./pages/Terms.jsx";
 
 
 // Small helpers to keep the route table readable.
@@ -64,9 +62,6 @@ function AnimatedRoutes() {
         <Route path="/reset-password" element={<P><ResetPassword /></P>} />
         <Route path="/auth/update-password" element={<P><UpdatePassword /></P>} />
         <Route path="/auth/callback" element={<AuthCallback />} />
-        <Route path="/about" element={<P><About /></P>} />
-        <Route path="/privacy" element={<P><Privacy /></P>} />
-        <Route path="/terms" element={<P><Terms /></P>} />
 
         {/* Onboarding is reachable right after signup */}
         <Route path="/onboarding" element={<Guard><Onboarding /></Guard>} />
@@ -84,7 +79,7 @@ function AnimatedRoutes() {
         <Route path="/become-mentor" element={<Guard><BecomeMentor /></Guard>} />
         <Route path="/requests" element={<Guard><Requests /></Guard>} />
         <Route path="/nexa" element={<Guard><Nexa /></Guard>} />
-        <Route path="/roadmap" element={<Guard><PlaceholderRoute route="roadmap" /></Guard>} />
+        <Route path="/roadmap" element={<Guard><Roadmap /></Guard>} />
 
         {/* Organizations — real-org accounts that submit/manage their own listings */}
         <Route path="/org/signup" element={<Guard><OrgSignup /></Guard>} />
@@ -111,14 +106,16 @@ export default function App() {
             <SavedProvider>
               <ConnectionsProvider>
                 <ConversationsProvider>
-                  <NexaDrawerProvider>
-                    <div id="nexa-app" style={{ minHeight: "100%" }}>
-                      <DemoModeBanner />
-                      <NavBar />
-                      <AnimatedRoutes />
-                      <NexaDrawer />
-                    </div>
-                  </NexaDrawerProvider>
+                  <RoadmapProvider>
+                    <NexaDrawerProvider>
+                      <div id="nexa-app" style={{ minHeight: "100%" }}>
+                        <DemoModeBanner />
+                        <NavBar />
+                        <AnimatedRoutes />
+                        <NexaDrawer />
+                      </div>
+                    </NexaDrawerProvider>
+                  </RoadmapProvider>
                 </ConversationsProvider>
               </ConnectionsProvider>
             </SavedProvider>
@@ -128,3 +125,4 @@ export default function App() {
     </AuthProvider>
   );
 }
+

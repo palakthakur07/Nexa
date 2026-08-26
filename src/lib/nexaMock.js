@@ -170,6 +170,13 @@ export function generateMockResponse(message, context, isFirstMessage) {
       const res = respondNextStep(context);
       return { content: res.content, actions: res.actions };
     }
+    if (context.entryContext?.type === "roadmap") {
+      if (!context.roadmapPlan) {
+        return { content: "You haven't built a roadmap yet — head to the Roadmap page and tell NEXA what you're working toward.", actions: [{ type: "VIEW_ROADMAP", label: "Build my roadmap" }] };
+      }
+      const res = respondNextStep(context);
+      return { content: `You're ${context.roadmapPlan.progressPct}% through **${context.roadmapPlan.goal}**.\n\n${res.content}`, actions: res.actions };
+    }
     const actions = [];
     if (context.currentOpportunity) actions.push({ type: "OPEN_OPPORTUNITY", label: "View opportunity", payload: { id: context.currentOpportunity.id } });
     if (context.currentMentor) actions.push({ type: "OPEN_MENTOR_PROFILE", label: "View profile", payload: { id: context.currentMentor.id } });

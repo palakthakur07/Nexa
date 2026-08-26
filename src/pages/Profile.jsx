@@ -1,63 +1,21 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Sparkles } from "lucide-react";
 import Button from "../components/ui/Button.jsx";
 import Chip from "../components/ui/Chip.jsx";
 import SelectCard from "../components/ui/SelectCard.jsx";
-import Avatar from "../components/ui/Avatar.jsx";
 import { useProfile } from "../context/ProfileContext.jsx";
-import { useAuth } from "../context/AuthContext.jsx";
-import { supabase } from "../lib/supabaseClient.js";
-import { syncMentorPhoto } from "../lib/dataService.js";
 import { CAREER_STAGES, INTERESTS, GOALS, SKILL_SUGGESTIONS, PRIORITIES } from "../data/onboardingOptions.js";
 import { HELP_TYPES } from "../data/networkOptions.js";
 
-const MAX_PHOTO_BYTES = 5 * 1024 * 1024; // 5MB
-
 export default function Profile() {
   const { profile, setProfile } = useProfile();
-  const { user } = useAuth();
   const navigate = useNavigate();
   const [saved, setSaved] = useState(false);
-  const [photoUploading, setPhotoUploading] = useState(false);
-  const [photoError, setPhotoError] = useState("");
-  const fileInputRef = useRef(null);
 
   const update = (patch) => setProfile((p) => ({ ...p, ...patch }));
   const toggleIn = (field, val) => setProfile((p) => ({ ...p, [field]: p[field].includes(val) ? p[field].filter((v) => v !== val) : [...p[field], val] }));
   const save = () => { setSaved(true); setTimeout(() => setSaved(false), 2200); };
-
-  const handlePhotoSelect = async (e) => {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (!file || !user) return;
-    setPhotoError("");
-    if (!file.type.startsWith("image/")) { setPhotoError("Please choose an image file."); return; }
-    if (file.size > MAX_PHOTO_BYTES) { setPhotoError("Photo must be under 5MB."); return; }
-    setPhotoUploading(true);
-    try {
-      const ext = file.name.split(".").pop() || "jpg";
-      const path = `${user.id}/${Date.now()}.${ext}`;
-      const { error: uploadError } = await supabase.storage
-        .from("mentor-photos")
-        .upload(path, file, { upsert: true, cacheControl: "3600" });
-      if (uploadError) throw uploadError;
-      const { data } = supabase.storage.from("mentor-photos").getPublicUrl(path);
-      update({ photoUrl: data.publicUrl });
-      // If this user also has a mentor listing, keep its photo in sync too.
-      await syncMentorPhoto(user.id, data.publicUrl);
-    } catch (err) {
-      console.error("Error uploading photo:", err.message);
-      setPhotoError(err.message || "Failed to upload photo.");
-    } finally {
-      setPhotoUploading(false);
-    }
-  };
-
-  const removePhoto = async () => {
-    update({ photoUrl: "" });
-    if (user) await syncMentorPhoto(user.id, "");
-  };
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-14 md:px-10">
@@ -68,34 +26,6 @@ export default function Profile() {
       <p className="mt-1 text-[14px]" style={{ color: "var(--text-secondary)" }}>This is what NEXA uses to personalize your dashboard.</p>
 
       <div className="mt-8 space-y-8">
-        <div>
-          <div className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--accent-strong)" }}>Photo</div>
-          <div className="nexa-card mt-2 rounded-[var(--radius-md)] p-4 flex items-center gap-4">
-            <Avatar initials={(profile.name || "?")[0]?.toUpperCase()} photoUrl={profile.photoUrl} size={56} />
-            <div>
-              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoSelect} />
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={photoUploading}
-                className="px-3.5 py-2 rounded-xl text-xs font-medium transition disabled:opacity-50"
-                style={{ border: "1px solid var(--border-strong)" }}
-              >
-                {photoUploading ? "Uploading…" : profile.photoUrl ? "Change photo" : "Upload photo"}
-              </button>
-              {profile.photoUrl && (
-                <button type="button" onClick={removePhoto} className="ml-2 px-3 py-2 rounded-xl text-xs font-medium transition" style={{ color: "var(--text-secondary)" }}>
-                  Remove
-                </button>
-              )}
-              <p className="text-xs mt-1" style={{ color: "var(--text-tertiary)" }}>
-                JPG or PNG, up to 5MB. If you're also a mentor, this photo is used on your mentor listing too.
-              </p>
-              {photoError && <p className="text-xs mt-1" style={{ color: "var(--danger, #b91c1c)" }}>{photoError}</p>}
-            </div>
-          </div>
-        </div>
-
         <div>
           <div className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--accent-strong)" }}>Personal</div>
           <div className="nexa-card mt-2 rounded-[var(--radius-md)] p-4">

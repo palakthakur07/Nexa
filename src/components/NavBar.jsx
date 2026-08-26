@@ -78,7 +78,7 @@ export default function NavBar() {
         )}
         {signedIn && (
           <button onClick={() => navigate("/profile")} className="t-fast flex items-center gap-2" aria-label="Profile">
-            <Avatar initials={(profile.name || "N")[0]} photoUrl={profile.photoUrl} size={32} />
+            <Avatar initials={(profile.name || "N")[0]} size={32} />
           </button>
         )}
 
