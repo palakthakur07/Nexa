@@ -1,36 +1,36 @@
 -- ============================================================================
--- 006 — Roadmap
+-- 006 — Personalized roadmaps
 -- ----------------------------------------------------------------------------
--- Real, persisted, per-user roadmap: one row per user holding a generated
--- plan (goal, phases, steps) plus a snapshot of the profile fields it was
--- generated from (used to detect staleness when goals/interests change).
--- Progress is never stored as a bare number — it's always derived from the
--- actual step statuses inside `phases` at read time (see roadmapEngine.js).
+-- Run in Supabase SQL Editor AFTER schema.sql and prior numbered migrations.
 -- Safe to re-run.
+--
+-- One row per user holding their generated roadmap (goal, phases, steps,
+-- and each step's status). Generation itself is deterministic client-side
+-- (lib/roadmapEngine.js, mirroring how lib/matching.js scores opportunities
+-- without a network call) — this table only persists the result so progress
+-- survives refresh/logout, exactly like `saved_opportunities` persists saves.
 -- ============================================================================
 
 create table if not exists public.roadmaps (
-  id                uuid primary key default gen_random_uuid(),
-  user_id           uuid not null unique references auth.users(id) on delete cascade,
-  goal_key          text not null,
-  title             text not null,
-  description       text,
-  phases            jsonb not null default '[]'::jsonb,
-  source_snapshot   jsonb,
-  created_at        timestamptz default now(),
-  updated_at        timestamptz default now()
+  id             uuid primary key default gen_random_uuid(),
+  user_id        uuid unique not null references auth.users(id) on delete cascade,
+  goal           text,
+  title          text not null,
+  description    text,
+  phases         jsonb not null default '[]'::jsonb,
+  -- Snapshot of the profile signals the roadmap was generated from, so a
+  -- later profile edit can be compared against it to offer "Update my
+  -- roadmap" (section 13) instead of silently regenerating.
+  generated_from jsonb,
+  source         text default 'template',
+  created_at     timestamptz default now(),
+  updated_at     timestamptz default now()
 );
 
 alter table public.roadmaps enable row level security;
 
-drop policy if exists "roadmaps_select_own" on public.roadmaps;
-drop policy if exists "roadmaps_insert_own" on public.roadmaps;
-drop policy if exists "roadmaps_update_own" on public.roadmaps;
-drop policy if exists "roadmaps_delete_own" on public.roadmaps;
-
-create policy "roadmaps_select_own" on public.roadmaps for select using (auth.uid() = user_id);
-create policy "roadmaps_insert_own" on public.roadmaps for insert with check (auth.uid() = user_id);
-create policy "roadmaps_update_own" on public.roadmaps for update using (auth.uid() = user_id);
-create policy "roadmaps_delete_own" on public.roadmaps for delete using (auth.uid() = user_id);
+drop policy if exists "roadmaps_all_own" on public.roadmaps;
+create policy "roadmaps_all_own" on public.roadmaps for all
+  using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 create index if not exists idx_roadmaps_user on public.roadmaps(user_id);

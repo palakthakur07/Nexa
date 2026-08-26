@@ -13,7 +13,6 @@ import { useSaved } from "../context/SavedContext.jsx";
 import { useConnections } from "../context/ConnectionsContext.jsx";
 import { useConversations } from "../context/ConversationsContext.jsx";
 import { useCatalog } from "../context/CatalogContext.jsx";
-import { useRoadmap } from "../context/RoadmapContext.jsx";
 import { buildNexaContext } from "../lib/nexaContext.js";
 import { askNexa } from "../lib/nexaAIService.js";
 import { generateSuggestedPrompts } from "../lib/suggestedPrompts.js";
@@ -26,7 +25,6 @@ export default function Nexa() {
   const { sent: requests } = useConnections();
   const { conversations, activeId, setActiveId, createConversation, addMessage, deleteConversation, renameConversation } = useConversations();
   const { opportunities, mentors } = useCatalog();
-  const roadmapState = useRoadmap();
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [contextOpen, setContextOpen] = useState(false);
@@ -38,22 +36,24 @@ export default function Nexa() {
   const entryContext = active?.entryContext || null;
 
   const context = useMemo(
-    () => buildNexaContext({ profile, saved, requests, entryContext, opportunities, mentors, roadmapState }),
-    [profile, saved, requests, entryContext, opportunities, mentors, roadmapState]
+    () => buildNexaContext({ profile, saved, requests, entryContext, opportunities, mentors }),
+    [profile, saved, requests, entryContext, opportunities, mentors]
   );
 
   // Seed a conversation from router state (contextual entry from
-  // Discover/OpportunityDetail/Network/MentorDetail/Dashboard/Profile).
+  // Discover/OpportunityDetail/Network/MentorDetail/Dashboard/Profile/Roadmap).
   useEffect(() => {
     if (seededRef.current) return;
     seededRef.current = true;
     const incoming = location.state?.entryContext || null;
+    const seedMessage = location.state?.seedMessage || "";
     if (incoming) {
       const id = createConversation(incoming);
-      const ctx = buildNexaContext({ profile, saved, requests, entryContext: incoming, opportunities, mentors, roadmapState });
+      const ctx = buildNexaContext({ profile, saved, requests, entryContext: incoming, opportunities, mentors });
+      if (seedMessage) addMessage(id, { id: `m-${Date.now()}`, role: "user", content: seedMessage, createdAt: new Date().toISOString() });
       setThinking(true);
-      askNexa("", ctx, []).then((res) => {
-        addMessage(id, { id: `m-${Date.now()}`, role: "nexa", content: res.content, actions: res.actions, createdAt: new Date().toISOString() });
+      askNexa(seedMessage, ctx, []).then((res) => {
+        addMessage(id, { id: `m-${Date.now() + 1}`, role: "nexa", content: res.content, actions: res.actions, createdAt: new Date().toISOString() });
       }).finally(() => setThinking(false));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

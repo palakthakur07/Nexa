@@ -1,474 +1,360 @@
-// Deterministic roadmap templates — no AI, no randomness, same spirit as
-// lib/matching.js and lib/mentorMatching.js. Each template turns the user's
-// actual onboarding answers (goals, career stage, interests) into a
-// phase-by-phase plan. `pickTemplate()` below chooses one template per user;
-// nothing here invents a goal the user didn't pick.
+// Roadmap phase/step templates, keyed by "track". A track is chosen from the
+// user's goals (see lib/roadmapEngine.js#pickTrack) — this file only holds
+// content, never profile-reading logic, so it stays easy to extend with a
+// new track without touching the engine.
 //
-// A phase may carry a `resourceFocus` — a hint for roadmapEngine/Roadmap.jsx
-// to surface real, matched opportunities or mentors under that phase. This
-// never generates fake listings; it's just a filter applied to the live
-// catalog (see Roadmap.jsx).
+// Every step is intentionally concrete (per the brief: "Complete one
+// beginner machine-learning project", not "improve your skills"). `effort`
+// is a rough time estimate shown in the UI. `find` (optional) tells the
+// engine to attach real catalog opportunities to that step/phase — `types`
+// and `categories` narrow the search, `goalsAny` OR-matches against the
+// opportunity's own goals list.
 
-function track(profile) {
-  const interest = profile.interests?.[0] || null;
-  return interest ? `${interest}` : "Your Path";
-}
-
-export const TEMPLATES = {
-  "start-business": {
-    goalKey: "start-business",
-    build: (profile) => ({
-      title: `Path to launching your business`,
-      description: `A working plan from idea to launch, built around what you told NEXA — ${profile.careerStage || "your current stage"}, focused on ${track(profile)}.`,
-      phases: [
-        {
-          id: "validate",
-          title: "Validate your idea",
-          description: "Before building anything, confirm there's a real problem worth solving.",
-          steps: [
-            { id: "validate-1", title: "Write a one-paragraph problem statement", description: "Who has this problem, and how are they solving it today without you?", effort: "30 min" },
-            { id: "validate-2", title: "Talk to 5 potential customers", description: "Real conversations, not surveys — listen for the problem, not your pitch.", effort: "1 week" },
-          ],
-        },
-        {
-          id: "build",
-          title: "Build a first version",
-          description: "The smallest thing you can put in front of someone.",
-          steps: [
-            { id: "build-1", title: "Define your MVP scope", description: "Cut it down to the one thing that proves the idea works.", effort: "1-2 hrs" },
-            { id: "build-2", title: "Build and test it with real users", description: "Get it in front of the people you talked to in phase one.", effort: "2-4 weeks" },
-          ],
-        },
-        {
-          id: "mentors",
-          title: "Find mentors who've done this",
-          description: "Founders who've been where you are can save you months.",
-          resourceFocus: { kind: "mentor" },
-          steps: [
-            { id: "mentors-1", title: "Connect with a founder mentor on NEXA", description: "Look for someone who can help with entrepreneurship specifically.", effort: "30 min" },
-          ],
-        },
-        {
-          id: "funding",
-          title: "Explore funding",
-          description: "Grants, incubators, and competitions that fit an early-stage idea.",
-          resourceFocus: { kind: "opportunity", types: ["Grant", "Incubator", "Competition"] },
-          steps: [
-            { id: "funding-1", title: "Shortlist 3 funding sources that fit your stage", description: "Not every program wants a fully-formed company — some want exactly where you are now.", effort: "2-3 hrs" },
-            { id: "funding-2", title: "Apply to one", description: "Pick the strongest fit first, not the biggest name.", effort: "1 week" },
-          ],
-        },
-        {
-          id: "launch",
-          title: "Launch",
-          description: "Put it out into the world.",
-          steps: [
-            { id: "launch-1", title: "Set a launch date and share it publicly", description: "A real date creates real momentum.", effort: "1 day" },
-          ],
-        },
-      ],
-    }),
-  },
-
-  "return-to-work": {
-    goalKey: "return-to-work",
-    build: (profile) => ({
-      title: `Your return-to-work plan`,
-      description: `A plan to rebuild momentum and get back into ${track(profile)}, at your pace.`,
-      phases: [
-        {
-          id: "refresh",
-          title: "Refresh your skills",
-          description: "Close the gap between where you left off and where the field is now.",
-          steps: [
-            { id: "refresh-1", title: "List what's changed in your field since your break", description: "Skim a few recent job postings for your old role to spot the gaps.", effort: "1-2 hrs" },
-            { id: "refresh-2", title: "Pick one skill to actively refresh", description: "A short course or a small project — depth on one thing beats a skim of ten.", effort: "1-2 weeks" },
-          ],
-        },
-        {
-          id: "confidence",
-          title: "Rebuild your story",
-          description: "Reframe the gap as part of your experience, not a hole in it.",
-          steps: [
-            { id: "confidence-1", title: "Update your profile with what you did during your break", description: "Caregiving, study, freelance work, volunteering — it counts.", effort: "1 hr" },
-          ],
-        },
-        {
-          id: "mentorship",
-          title: "Reconnect through mentorship",
-          description: "Someone who's navigated a return can help you avoid the hardest parts.",
-          resourceFocus: { kind: "mentor" },
-          steps: [
-            { id: "mentorship-1", title: "Connect with a mentor who's returned to work before", description: "Ask specifically how they handled the gap in interviews.", effort: "30 min" },
-          ],
-        },
-        {
-          id: "returnships",
-          title: "Look at returnships",
-          description: "Programs built specifically to bring people back in.",
-          resourceFocus: { kind: "opportunity", types: ["Returnship"] },
-          steps: [
-            { id: "returnships-1", title: "Shortlist returnship programs that fit your field", description: "These are designed for exactly your situation.", effort: "2-3 hrs" },
-          ],
-        },
-        {
-          id: "apply",
-          title: "Apply",
-          description: "Start putting yourself forward.",
-          resourceFocus: { kind: "opportunity" },
-          steps: [
-            { id: "apply-1", title: "Apply to your first role or program", description: "The first one is the hardest — momentum builds after.", effort: "ongoing" },
-          ],
-        },
-      ],
-    }),
-  },
-
-  "change-careers": {
-    goalKey: "change-careers",
-    build: (profile) => ({
-      title: `Your career-change plan`,
-      description: `A bridge from where you are now (${profile.careerStage || "your current role"}) into ${track(profile)}.`,
-      phases: [
-        {
-          id: "explore",
-          title: "Explore the new direction",
-          description: "Get specific about what you're actually moving toward.",
-          steps: [
-            { id: "explore-1", title: "Talk to 2 people already working in the field", description: "Ask what their day-to-day actually looks like.", effort: "1 week" },
-          ],
-        },
-        {
-          id: "bridge",
-          title: "Close the skills gap",
-          description: "Identify and build what's missing between your current and target field.",
-          steps: [
-            { id: "bridge-1", title: "List the skills the new field asks for that you don't have yet", description: "Check a handful of real job postings.", effort: "1-2 hrs" },
-            { id: "bridge-2", title: "Build one project or credential that proves you have them", description: "Concrete proof beats a bullet point on a resume.", effort: "3-6 weeks" },
-          ],
-        },
-        {
-          id: "proof",
-          title: "Build proof of work",
-          description: "Something you can point to, not just talk about.",
-          steps: [
-            { id: "proof-1", title: "Publish or share your project", description: "A portfolio piece, write-up, or public repo.", effort: "1 week" },
-          ],
-        },
-        {
-          id: "network",
-          title: "Network in the new field",
-          description: "Warm connections open doors cold applications don't.",
-          resourceFocus: { kind: "mentor" },
-          steps: [
-            { id: "network-1", title: "Connect with a mentor already working in the new field", description: "Ask what actually got them hired.", effort: "30 min" },
-          ],
-        },
-        {
-          id: "land",
-          title: "Land the role",
-          description: "Put yourself forward for real opportunities.",
-          resourceFocus: { kind: "opportunity" },
-          steps: [
-            { id: "land-1", title: "Apply to your first opportunity in the new field", description: "Aim for a genuine fit, not the most prestigious name.", effort: "ongoing" },
-          ],
-        },
-      ],
-    }),
-  },
-
-  "scholarship-study": {
-    goalKey: "scholarship-study",
-    build: (profile) => ({
-      title: `Scholarships & studying abroad`,
-      description: `A plan to find and win funding for study, centered on ${track(profile)}.`,
-      phases: [
-        {
-          id: "discover",
-          title: "Discover programs",
-          description: "Find the scholarships and programs that actually fit you.",
-          resourceFocus: { kind: "opportunity", types: ["Scholarship", "Grant"] },
-          steps: [
-            { id: "discover-1", title: "Shortlist 5 scholarships or programs that fit your profile", description: "Match on field, career stage, and funding type.", effort: "2-3 hrs" },
-          ],
-        },
-        {
-          id: "profile",
-          title: "Build your application profile",
-          description: "The materials every strong application needs.",
-          steps: [
-            { id: "profile-1", title: "Draft your personal statement", description: "Lead with what you want to do, not just what you've done.", effort: "1 week" },
-            { id: "profile-2", title: "Line up your references", description: "Ask early — good recommenders need time.", effort: "1-2 weeks" },
-          ],
-        },
-        {
-          id: "apply",
-          title: "Apply",
-          description: "Submit strong, complete applications.",
-          resourceFocus: { kind: "opportunity", types: ["Scholarship", "Grant"] },
-          steps: [
-            { id: "apply-1", title: "Submit your first application", description: "The first one always takes longest — the rest go faster.", effort: "1 week" },
-          ],
-        },
-        {
-          id: "decide",
-          title: "Prepare to decide",
-          description: "Once offers come in, be ready to choose well.",
-          steps: [
-            { id: "decide-1", title: "Set your decision criteria in advance", description: "Cost, location, program fit — decide what matters before offers arrive.", effort: "30 min" },
-          ],
-        },
-      ],
-    }),
-  },
-
-  "find-funding": {
-    goalKey: "find-funding",
-    build: (profile) => ({
-      title: `Finding funding`,
-      description: `A plan to find and secure funding relevant to ${track(profile)}.`,
-      phases: [
-        {
-          id: "clarify",
-          title: "Clarify what you need",
-          description: "Funding searches go faster once the ask is specific.",
-          steps: [
-            { id: "clarify-1", title: "Write down exactly what the funding is for and how much you need", description: "Specific asks are easier to match to specific sources.", effort: "30 min" },
-          ],
-        },
-        {
-          id: "sources",
-          title: "Find funding sources",
-          description: "Grants, fellowships, and funded programs that fit.",
-          resourceFocus: { kind: "opportunity", types: ["Grant", "Fellowship", "Scholarship"] },
-          steps: [
-            { id: "sources-1", title: "Shortlist 3-5 funding sources that fit your need", description: "Match on eligibility and funding type first.", effort: "2-3 hrs" },
-          ],
-        },
-        {
-          id: "apply",
-          title: "Apply",
-          description: "Submit applications that make the case clearly.",
-          steps: [
-            { id: "apply-1", title: "Submit your first funding application", description: "Reuse and adapt your materials across applications.", effort: "1 week" },
-          ],
-        },
-        {
-          id: "follow-through",
-          title: "Follow through",
-          description: "Keep the pipeline moving.",
-          steps: [
-            { id: "follow-1", title: "Track every application's status and deadline", description: "Use Saved on NEXA to keep them in one place.", effort: "ongoing" },
-          ],
-        },
-      ],
-    }),
-  },
-
-  "first-job-internship": {
-    goalKey: "first-job-internship",
-    build: (profile) => ({
-      title: `Your path into ${track(profile)}`,
-      description: `A plan to go from ${profile.careerStage || "where you are now"} to your first role or internship.`,
-      phases: [
-        {
-          id: "foundation",
-          title: "Build your foundation",
-          description: "The core skills the field expects.",
-          steps: [
-            { id: "foundation-1", title: "Pick one core skill to focus on first", description: "Depth beats breadth when you're starting out.", effort: "1-2 weeks" },
-          ],
-        },
-        {
-          id: "skills",
-          title: "Build technical skills",
-          description: "Go from learning to doing.",
-          steps: [
-            { id: "skills-1", title: "Complete one focused course or tutorial track", description: "Pick one and finish it before moving to the next.", effort: "2-4 weeks" },
-          ],
-        },
-        {
-          id: "projects",
-          title: "Build projects",
-          description: "Proof of what you can do, not just what you've studied.",
-          steps: [
-            { id: "projects-1", title: "Build one small project you can show", description: "Something real, even if small, beats a list of completed courses.", effort: "2-3 weeks" },
-          ],
-        },
-        {
-          id: "internships",
-          title: "Find internships & entry roles",
-          description: "Real, verified opportunities matched to your profile.",
-          resourceFocus: { kind: "opportunity", types: ["Internship"] },
-          steps: [
-            { id: "internships-1", title: "Shortlist internships that fit your profile", description: "Match on field, career stage, and location preference.", effort: "2-3 hrs" },
-          ],
-        },
-        {
-          id: "apply",
-          title: "Apply",
-          description: "Put yourself forward.",
-          resourceFocus: { kind: "opportunity" },
-          steps: [
-            { id: "apply-1", title: "Apply to your first opportunity", description: "The first application is the hardest one.", effort: "ongoing" },
-          ],
-        },
-      ],
-    }),
-  },
-
-  "mentors-network": {
-    goalKey: "mentors-network",
-    build: (profile) => ({
-      title: `Building your network`,
-      description: `A plan to find mentors and grow your network around ${track(profile)}.`,
-      phases: [
-        {
-          id: "ready",
-          title: "Get mentor-ready",
-          description: "Know what you're actually asking for.",
-          steps: [
-            { id: "ready-1", title: "Write down 1-2 specific things you want help with", description: "\"Can you mentor me\" is harder to say yes to than a specific ask.", effort: "20 min" },
-          ],
-        },
-        {
-          id: "find",
-          title: "Find the right people",
-          description: "Real, self-registered mentors on NEXA matched to your goals.",
-          resourceFocus: { kind: "mentor" },
-          steps: [
-            { id: "find-1", title: "Browse mentors matched to your profile", description: "Look for overlap in field, goals, and what they can help with.", effort: "30 min" },
-          ],
-        },
-        {
-          id: "ask",
-          title: "Make the ask",
-          description: "Reach out with something specific.",
-          steps: [
-            { id: "ask-1", title: "Send your first connection request", description: "Reference the specific thing you want help with.", effort: "15 min" },
-          ],
-        },
-        {
-          id: "relationship",
-          title: "Build the relationship",
-          description: "One good conversation can turn into an ongoing relationship.",
-          steps: [
-            { id: "relationship-1", title: "Follow up after your first conversation", description: "A short thank-you and a note on what you'll do with the advice.", effort: "10 min" },
-          ],
-        },
-      ],
-    }),
-  },
-
-  "build-skills": {
-    goalKey: "build-skills",
-    build: (profile) => ({
-      title: `Building your skills`,
-      description: `A focused plan to build real skills in ${track(profile)}.`,
-      phases: [
-        {
-          id: "focus",
-          title: "Pick a focus area",
-          description: "One area, deeply, beats many areas shallowly.",
-          steps: [
-            { id: "focus-1", title: "Choose one skill to focus on for the next month", description: "Pick based on your goals, not what's trending.", effort: "20 min" },
-          ],
-        },
-        {
-          id: "learn",
-          title: "Learn",
-          description: "Structured learning on your chosen focus.",
-          steps: [
-            { id: "learn-1", title: "Complete one course or structured resource", description: "Finish what you start before adding another.", effort: "2-4 weeks" },
-          ],
-        },
-        {
-          id: "practice",
-          title: "Practice with a project",
-          description: "Turn learning into something real.",
-          steps: [
-            { id: "practice-1", title: "Build one project using what you learned", description: "Small and finished beats big and abandoned.", effort: "2-3 weeks" },
-          ],
-        },
-        {
-          id: "proof",
-          title: "Show proof of work",
-          description: "Make it visible.",
-          steps: [
-            { id: "proof-1", title: "Share your project publicly", description: "A portfolio, write-up, or public repo.", effort: "1-2 hrs" },
-          ],
-        },
-        {
-          id: "next",
-          title: "Take the next step",
-          description: "Turn the new skill into an opportunity.",
-          resourceFocus: { kind: "opportunity" },
-          steps: [
-            { id: "next-1", title: "Explore opportunities that use your new skill", description: "Let NEXA match you to what fits.", effort: "1 hr" },
-          ],
-        },
-      ],
-    }),
-  },
-
-  general: {
-    goalKey: "general",
-    build: (profile) => ({
-      title: `Getting started with NEXA`,
-      description: `A first plan to help you find direction — update your goals anytime and NEXA will rebuild this.`,
-      phases: [
-        {
-          id: "orient",
-          title: "Get to know NEXA",
-          description: "See what's here before deciding where to focus.",
-          steps: [
-            { id: "orient-1", title: "Browse opportunities matched to your profile", description: "See what's out there before narrowing in.", effort: "20 min" },
-          ],
-        },
-        {
-          id: "explore",
-          title: "Explore what fits",
-          description: "Narrow toward a direction that feels right.",
-          steps: [
-            { id: "explore-1", title: "Update your goals in your profile", description: "The more specific your goals, the more specific NEXA's plan for you can be.", effort: "10 min" },
-          ],
-        },
-        {
-          id: "first-step",
-          title: "Take a first step",
-          description: "Momentum starts with one concrete action.",
-          resourceFocus: { kind: "opportunity" },
-          steps: [
-            { id: "first-step-1", title: "Save your first opportunity", description: "Pick anything that looks interesting — you can change direction later.", effort: "10 min" },
-          ],
-        },
-        {
-          id: "momentum",
-          title: "Build momentum",
-          description: "Small, consistent steps beat sporadic big ones.",
-          steps: [
-            { id: "momentum-1", title: "Ask NEXA what to do next", description: "NEXA can suggest a next step once it knows more about your goals.", effort: "5 min" },
-          ],
-        },
-      ],
-    }),
-  },
+export const TRACKS = {
+  SCHOLARSHIP: "scholarship",
+  EARLY_CAREER: "earlyCareer",
+  CAREER_CHANGE: "careerChange",
+  RETURNING: "returning",
+  FOUNDER: "founder",
+  FUNDING: "funding",
+  GROWTH: "growth",
 };
 
-// Priority order — most specific/actionable goal wins when the user picked
-// several. Falls through to career-stage signals, then the general template.
-export function pickTemplateKey(profile) {
-  const goals = profile.goals || [];
-  const has = (g) => goals.includes(g);
+const find = (overrides) => ({ ...overrides });
 
-  if (has("Start a business")) return "start-business";
-  if (has("Return to work") || profile.careerStage === "Returning to work") return "return-to-work";
-  if (has("Change careers")) return "change-careers";
-  if (has("Get a scholarship") || has("Study abroad")) return "scholarship-study";
-  if (has("Find funding")) return "find-funding";
-  if (has("Find an internship") || has("Get my first job")) return "first-job-internship";
-  if (has("Build my skills")) return "build-skills";
-  if (has("Find mentors") || has("Grow my network")) return "mentors-network";
-  if (profile.careerStage === "Entrepreneur") return "start-business";
-  return "general";
+export function scholarshipTrack({ interests, isStudent }) {
+  const field = interests[0] || "your field";
+  return [
+    {
+      key: "define-target",
+      title: "Define Your Direction",
+      description: "Get specific about what you're applying for before you start applying.",
+      steps: [
+        {
+          key: "shortlist-programs",
+          title: "Shortlist 3-5 target programs or destinations",
+          description: "Narrow down countries, universities, or programs that fit your goals and budget.",
+          effort: "2-3 hrs",
+        },
+        {
+          key: "list-requirements",
+          title: "List each program's eligibility and deadlines",
+          description: "Write down GPA, test score, and document requirements side by side so nothing is missed.",
+          effort: "1-2 hrs",
+        },
+      ],
+    },
+    {
+      key: "build-profile",
+      title: "Build Your Scholarship Profile",
+      description: `Strengthen the parts of your profile that scholarship committees weigh most in ${field}.`,
+      steps: [
+        {
+          key: "draft-sop",
+          title: "Write a first draft of your statement of purpose",
+          description: "Get your story, motivation, and goals down on paper — polish comes later.",
+          effort: "3-4 hrs",
+        },
+        {
+          key: "recommenders",
+          title: "Ask two people for letters of recommendation",
+          description: "Give your recommenders at least 3 weeks' notice and a summary of your goals.",
+          effort: "1 hr",
+        },
+        isStudent
+          ? { key: "test-scores", title: "Register for any required standardized test", description: "Check whether your target programs need IELTS/TOEFL/GRE/GMAT and book a date.", effort: "1-2 hrs" }
+          : { key: "portfolio", title: "Assemble supporting documents and transcripts", description: "Collect transcripts, certificates, and a CV in the format each program asks for.", effort: "2 hrs" },
+      ],
+    },
+    {
+      key: "find-funding",
+      title: "Find Funding & Scholarships",
+      description: "See which verified, funded opportunities on NEXA actually match your profile.",
+      find: { phase: true, types: ["Scholarship", "Fellowship", "Grant"], categories: interests },
+      steps: [
+        { key: "apply-first", title: "Apply to your first matched scholarship", description: "Start with the opportunity NEXA ranks as your strongest match.", effort: "2-4 hrs" },
+      ],
+    },
+    {
+      key: "apply",
+      title: "Submit Applications",
+      description: "Turn your shortlist into submitted applications.",
+      steps: [
+        { key: "final-review", title: "Get a second pair of eyes on your application", description: "Ask a mentor or peer to review your statement and forms before you submit.", effort: "1 hr" },
+        { key: "submit-apps", title: "Submit your applications before the deadline", description: "Aim to submit at least 48 hours before the deadline in case of technical issues.", effort: "1 hr" },
+      ],
+    },
+  ];
+}
+
+export function earlyCareerTrack({ interests, isStudent, skills }) {
+  const field = interests[0] || "your field";
+  const phases = [];
+  if (isStudent || skills.length === 0) {
+    phases.push({
+      key: "foundation",
+      title: "Build Your Foundation",
+      description: `Strengthen the core skills that ${field} internships and first jobs screen for.`,
+      steps: [
+        { key: "core-skill", title: `Complete one beginner course in ${field}`, description: "Pick a single, well-reviewed course and finish it end to end rather than sampling several.", effort: "1-2 weeks" },
+        { key: "first-project", title: "Build one small project you can show", description: "A finished, simple project beats an ambitious, unfinished one on your resume.", effort: "1 week" },
+      ],
+    });
+  }
+  phases.push(
+    {
+      key: "resume",
+      title: "Get Application-Ready",
+      description: "Make sure your resume and profile can actually get you noticed.",
+      steps: [
+        { key: "resume-draft", title: "Write or update your resume", description: "One page, quantify your impact where you can, and tailor it to the roles you want.", effort: "2 hrs" },
+        { key: "linkedin", title: "Complete your NEXA profile and LinkedIn", description: "A complete profile is what makes NEXA's matches — and recruiters — take you seriously.", effort: "1 hr" },
+      ],
+    },
+    {
+      key: "experience",
+      title: "Gain Experience",
+      description: "Real, verified opportunities that match what you've told NEXA.",
+      find: { phase: true, types: ["Internship", "Fellowship", "Job"], categories: interests },
+      steps: [
+        { key: "apply-internships", title: "Apply to 3 matched internships or entry roles", description: "Quality over quantity — tailor each application to the specific listing.", effort: "3-5 hrs" },
+      ],
+    },
+    {
+      key: "applications",
+      title: "Start Applying",
+      description: "NEXA keeps finding opportunities that match your profile as you go.",
+      steps: [
+        { key: "track-apps", title: "Track every application's status", description: "Use Saved to move each application from Interested through Applied to Interview.", effort: "ongoing" },
+        { key: "mock-interview", title: "Do one mock interview", description: "Practice answering \"tell me about yourself\" and one technical/behavioral question out loud.", effort: "1 hr" },
+      ],
+    }
+  );
+  return phases;
+}
+
+export function careerChangeTrack({ interests, skills }) {
+  const field = interests[0] || "your new field";
+  return [
+    {
+      key: "validate",
+      title: "Validate the Direction",
+      description: `Make sure ${field} is the right move before you invest months in it.`,
+      steps: [
+        { key: "informational", title: "Have one informational conversation with someone in the field", description: "Ask a NEXA mentor what their day-to-day actually looks like.", effort: "30 min" },
+        { key: "gap-analysis", title: "List the skills you have vs. the skills the field needs", description: "Be specific — this list becomes your learning plan in the next phase.", effort: "1 hr" },
+      ],
+    },
+    {
+      key: "reskill",
+      title: "Build the New Skillset",
+      description: "Close the gap with focused, provable learning.",
+      steps: [
+        { key: "core-course", title: `Complete one structured course in ${field}`, description: "Choose depth over breadth — one finished course outweighs five started ones.", effort: "2-4 weeks" },
+        skills.length > 0
+          ? { key: "bridge-project", title: "Build a project that connects your old and new skills", description: "Employers respond well to a transition story backed by a real project.", effort: "1-2 weeks" }
+          : { key: "first-project", title: "Build one project in your new field", description: "Something small and finished you can talk through in an interview.", effort: "1-2 weeks" },
+      ],
+    },
+    {
+      key: "network",
+      title: "Find Mentors & Community",
+      description: "People who've made a similar switch shorten the learning curve.",
+      find: { phase: false },
+      steps: [
+        { key: "mentor-connect", title: "Connect with a mentor who's changed careers before", description: "Send a specific, low-pressure request through NEXA's network.", effort: "20 min" },
+      ],
+    },
+    {
+      key: "apply",
+      title: "Make the Move",
+      description: "Turn your new skillset into applications.",
+      find: { phase: true, categories: interests },
+      steps: [
+        { key: "rewrite-resume", title: "Rewrite your resume around your new direction", description: "Lead with transferable skills and the project you built, not your old title.", effort: "2 hrs" },
+        { key: "apply-roles", title: "Apply to 3 roles or programs matched to your new direction", description: "Start with the ones NEXA ranks as strongest matches.", effort: "3-5 hrs" },
+      ],
+    },
+  ];
+}
+
+export function returningTrack({ interests }) {
+  return [
+    {
+      key: "refresh",
+      title: "Refresh Your Skills",
+      description: "Close any gaps that opened up during your time away.",
+      steps: [
+        { key: "landscape-check", title: `Spend an hour on what's changed in ${interests[0] || "your field"}`, description: "Read two or three recent articles or a short update course to re-orient yourself.", effort: "1-2 hrs" },
+        { key: "refresh-course", title: "Complete one short refresher course", description: "Pick the tool, platform, or skill that changed most while you were away.", effort: "1 week" },
+      ],
+    },
+    {
+      key: "confidence",
+      title: "Rebuild Your Story",
+      description: "Turn your career break into a confident, honest narrative.",
+      steps: [
+        { key: "gap-story", title: "Write one paragraph explaining your career gap", description: "Own it plainly and pivot straight into what you bring now — no over-explaining needed.", effort: "30 min" },
+        { key: "resume-update", title: "Update your resume for a return to work", description: "Lead with your strongest experience; a functional or hybrid format often works well here.", effort: "1-2 hrs" },
+      ],
+    },
+    {
+      key: "mentorship",
+      title: "Find Mentorship",
+      description: "Talk to someone who has successfully returned to work before.",
+      find: { phase: false },
+      steps: [
+        { key: "returnship-mentor", title: "Connect with a mentor who's returned to work", description: "Ask specifically about how they handled the gap and their first 90 days back.", effort: "20 min" },
+      ],
+    },
+    {
+      key: "returnship",
+      title: "Find a Returnship",
+      description: "Structured return-to-work programs are built for exactly this transition.",
+      find: { phase: true, types: ["Returnship", "Fellowship", "Job"], categories: interests },
+      steps: [
+        { key: "apply-returnship", title: "Apply to a matched returnship or role", description: "Start with programs designed specifically for people returning after a break.", effort: "2-4 hrs" },
+      ],
+    },
+    {
+      key: "applications",
+      title: "Apply With Confidence",
+      description: "You're ready — now it's a numbers-and-follow-up game.",
+      steps: [
+        { key: "apply-roles", title: "Apply to 3 matched roles", description: "Tailor each application; reuse your gap-story paragraph where relevant.", effort: "3-5 hrs" },
+      ],
+    },
+  ];
+}
+
+export function founderTrack({ interests }) {
+  return [
+    {
+      key: "validate-idea",
+      title: "Validate Your Idea",
+      description: "Confirm real people want this before you build more.",
+      steps: [
+        { key: "problem-statement", title: "Write a one-paragraph problem statement", description: "State exactly who has the problem and why existing options fall short.", effort: "1 hr" },
+        { key: "customer-interviews", title: "Talk to 5 potential customers", description: "Ask about their problem, not your idea — resist pitching during these conversations.", effort: "1 week" },
+      ],
+    },
+    {
+      key: "build",
+      title: "Build a First Version",
+      description: "Get something real in front of people, however small.",
+      steps: [
+        { key: "mvp", title: "Build a minimum viable version", description: "A landing page, prototype, or manual service can count — it just has to test the core assumption.", effort: "2-4 weeks" },
+        { key: "first-users", title: "Get 5-10 people to actually try it", description: "Real usage, even from friends and family first, beats hypothetical interest.", effort: "1-2 weeks" },
+      ],
+    },
+    {
+      key: "mentors",
+      title: "Find Mentors",
+      description: "Founders who've built something similar can save you months.",
+      find: { phase: false },
+      steps: [
+        { key: "founder-mentor", title: "Connect with a founder mentor on NEXA", description: "Ask about the mistake they'd avoid if they started again.", effort: "20 min" },
+      ],
+    },
+    {
+      key: "funding",
+      title: "Explore Funding",
+      description: "Verified funding and incubator opportunities matched to your profile.",
+      find: { phase: true, types: ["Incubator", "Grant", "Competition"], categories: interests, goalsAny: ["Find funding", "Start a business"] },
+      steps: [
+        { key: "apply-incubator", title: "Apply to one matched incubator, grant, or competition", description: "Pick the strongest match rather than applying everywhere at once.", effort: "3-5 hrs" },
+      ],
+    },
+    {
+      key: "launch",
+      title: "Launch",
+      description: "Take the version people responded to and put it out publicly.",
+      steps: [
+        { key: "launch-plan", title: "Write a simple launch checklist", description: "Where you'll announce it, who you'll tell first, and how you'll collect feedback.", effort: "2 hrs" },
+        { key: "launch-it", title: "Launch to your first real audience", description: "Small and real beats big and delayed.", effort: "1 day" },
+      ],
+    },
+  ];
+}
+
+export function fundingTrack({ interests }) {
+  return [
+    {
+      key: "define-need",
+      title: "Define What You Need",
+      description: "Get specific about the funding you're looking for.",
+      steps: [
+        { key: "funding-type", title: "Decide what type of funding fits your goal", description: "Grant, scholarship, competition, or investment — each has a different application path.", effort: "1 hr" },
+      ],
+    },
+    {
+      key: "find-funding",
+      title: "Find Matched Funding",
+      description: "Real, verified funding opportunities that match your profile.",
+      find: { phase: true, types: ["Grant", "Scholarship", "Fellowship", "Competition"], categories: interests, goalsAny: ["Find funding"] },
+      steps: [
+        { key: "shortlist-funding", title: "Shortlist your top 3 matched opportunities", description: "Compare deadlines and requirements before committing your time.", effort: "1-2 hrs" },
+      ],
+    },
+    {
+      key: "prepare",
+      title: "Prepare Your Application",
+      description: "Most funding decisions come down to a clear, specific application.",
+      steps: [
+        { key: "funding-pitch", title: "Write a one-page summary of what you need funding for", description: "Be concrete about the amount, the use, and the outcome you expect.", effort: "2 hrs" },
+      ],
+    },
+    {
+      key: "apply",
+      title: "Apply",
+      description: "Submit and follow up.",
+      steps: [
+        { key: "submit-funding", title: "Submit your funding application", description: "Double-check every required document is attached before submitting.", effort: "1-2 hrs" },
+      ],
+    },
+  ];
+}
+
+export function growthTrack({ interests, priorities }) {
+  const field = interests[0] || "your field";
+  const wantsMentor = priorities.includes("Mentorship");
+  const wantsNetwork = priorities.includes("Networking");
+  return [
+    {
+      key: "skills",
+      title: "Build Your Skills",
+      description: `Focused, concrete growth in ${field} rather than open-ended learning.`,
+      steps: [
+        { key: "skill-course", title: `Complete one course or certification in ${field}`, description: "Pick one and finish it — depth beats browsing several.", effort: "1-2 weeks" },
+        { key: "skill-project", title: "Build one project that uses your new skill", description: "Something small enough to finish and specific enough to talk about.", effort: "1 week" },
+      ],
+    },
+    {
+      key: "connect",
+      title: wantsMentor || wantsNetwork ? "Find Mentors & Community" : "Grow Your Network",
+      description: "The people around you shape how fast you grow.",
+      find: { phase: false },
+      steps: [
+        { key: "connect-mentor", title: "Connect with one mentor on NEXA", description: "Send a specific request rather than a general \"can you help me\" message.", effort: "20 min" },
+        { key: "join-community", title: "Join one relevant community", description: "Show up once, even briefly — consistency matters more than intensity.", effort: "30 min" },
+      ],
+    },
+    {
+      key: "opportunities",
+      title: "Explore Opportunities",
+      description: "Real opportunities matched to your interests and goals.",
+      find: { phase: true, categories: interests },
+      steps: [
+        { key: "explore-matches", title: "Review your top matched opportunities", description: "Save the ones that genuinely fit — quality over quantity.", effort: "30 min" },
+      ],
+    },
+    {
+      key: "apply",
+      title: "Take Action",
+      description: "Turn exploration into a concrete next step.",
+      steps: [
+        { key: "act-on-match", title: "Apply to or act on one matched opportunity", description: "Pick the single strongest match and follow it through completely.", effort: "2-4 hrs" },
+      ],
+    },
+  ];
 }

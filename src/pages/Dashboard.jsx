@@ -1,23 +1,23 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Check, Sparkles, ArrowUpRight, UserPlus } from "lucide-react";
+import { Sparkles, ArrowUpRight, UserPlus } from "lucide-react";
 import Button from "../components/ui/Button.jsx";
-import Badge from "../components/ui/Badge.jsx";
 import MentorCard from "../components/network/MentorCard.jsx";
 import OpportunityCard from "../components/discover/OpportunityCard.jsx";
 import DashboardSection from "../components/dashboard/DashboardSection.jsx";
 import { Reveal } from "../lib/hooks.jsx";
 import { useProfile } from "../context/ProfileContext.jsx";
 import { useCatalog } from "../context/CatalogContext.jsx";
-import { useRoadmap } from "../context/RoadmapContext.jsx";
 import { calculateMatchScore } from "../lib/matching.js";
 import { calculateMentorMatchScore } from "../lib/mentorMatching.js";
 import { fetchRatingsSummary } from "../lib/dataService.js";
+import { getNextMove } from "../lib/scoring.js";
+import { useRoadmap } from "../context/RoadmapContext.jsx";
 
 export default function Dashboard() {
   const { profile } = useProfile();
   const { opportunities, mentors, communities } = useCatalog();
-  const { roadmap, progress, nextStep, generate, saving } = useRoadmap();
+  const { roadmap } = useRoadmap();
   const navigate = useNavigate();
   const [ratings, setRatings] = useState({});
 
@@ -48,6 +48,7 @@ export default function Dashboard() {
     [profile, mentors]
   );
 
+  const nextMove = useMemo(() => getNextMove(profile), [profile]);
   const strongMatches = topOpportunities.filter((o) => o.match >= 80).length;
 
   return (
@@ -64,27 +65,17 @@ export default function Dashboard() {
         </p>
       </Reveal>
 
-      <DashboardSection eyebrow="Your next move" title={nextStep ? nextStep.step.title : roadmap ? "You're all caught up" : "Build your roadmap"}>
+      <DashboardSection eyebrow="Your next move" title={nextMove.title}>
         <div className="nexa-panel flex flex-col items-start justify-between gap-4 rounded-[var(--radius-lg)] p-6 sm:flex-row sm:items-center">
           <p
             className="max-w-md text-[14px] leading-relaxed"
             style={{ color: "var(--text-secondary)" }}
           >
-            {nextStep
-              ? nextStep.step.description
-              : roadmap
-              ? "Update your goals to get a new plan, or keep exploring opportunities."
-              : "Tell NEXA what you're working toward and get a personalized, phase-by-phase plan."}
+            {nextMove.why}
           </p>
-          {roadmap ? (
-            <Button variant="primary" onClick={() => navigate("/roadmap")}>
-              View roadmap
-            </Button>
-          ) : (
-            <Button variant="primary" onClick={generate} disabled={saving}>
-              {saving ? "Building…" : "Build my roadmap"}
-            </Button>
-          )}
+          <Button variant="primary" onClick={() => navigate("/discover")}>
+            Continue
+          </Button>
         </div>
       </DashboardSection>
 
@@ -161,58 +152,38 @@ export default function Dashboard() {
       <DashboardSection
         eyebrow="Progress"
         title="Your roadmap"
-        action={roadmap ? <span className="font-display text-[1.4rem]">{progress.pct}%</span> : null}
+        action={roadmap && <span className="font-display text-[1.4rem]">{roadmap.progress.pct}%</span>}
       >
-        {!roadmap ? (
-          <div className="nexa-card flex flex-col items-center gap-3 rounded-[var(--radius-lg)] p-8 text-center">
-            <p className="text-[13px]" style={{ color: "var(--text-secondary)" }}>
-              You haven't built a roadmap yet — NEXA can turn your goals into a phase-by-phase plan.
-            </p>
-            <Button variant="secondary" size="sm" icon={Sparkles} onClick={generate} disabled={saving}>
-              {saving ? "Building…" : "Build my roadmap"}
-            </Button>
-          </div>
-        ) : (
-          <div className="nexa-card cursor-pointer rounded-[var(--radius-lg)] p-6" onClick={() => navigate("/roadmap")}>
-            <div className="mb-1 font-display text-[1.15rem]">{roadmap.title}</div>
-            {roadmap.phases.map((phase, i) => {
-              const status = phase.steps.every((s) => s.status === "completed")
-                ? "done"
-                : phase.steps.some((s) => s.status === "in_progress")
-                ? "now"
-                : phase.steps.some((s) => s.status === "completed")
-                ? "now"
-                : "later";
-              return (
-                <div
-                  key={phase.id}
-                  className="flex items-center gap-3 py-2.5"
-                  style={{ borderBottom: i < roadmap.phases.length - 1 ? "1px solid var(--border)" : "none" }}
-                >
-                  <div
-                    className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold"
-                    style={{
-                      background: status === "done" ? "var(--success-soft)" : status === "now" ? "var(--accent-soft)" : "var(--surface-muted)",
-                      color: status === "done" ? "var(--success)" : status === "now" ? "var(--accent-strong)" : "var(--text-tertiary)",
-                    }}
-                  >
-                    {status === "done" ? <Check size={12} /> : String(i + 1).padStart(2, "0")}
-                  </div>
-                  <span className="text-[13.5px] font-medium" style={{ color: status === "later" ? "var(--text-tertiary)" : "var(--text-primary)" }}>
-                    {phase.title}
-                  </span>
-                  {status === "now" && <Badge tone="accent">Now</Badge>}
-                </div>
-              );
-            })}
-            <div className="mt-3 flex items-center justify-between">
-              {nextStep ? (
-                <span className="text-[12.5px]" style={{ color: "var(--text-secondary)" }}>Next: {nextStep.step.title}</span>
-              ) : <span />}
-              <span className="t-fast text-[13px] font-semibold" style={{ color: "var(--accent-strong)" }}>
-                Continue roadmap →
+        {roadmap ? (
+          <div className="nexa-card rounded-[var(--radius-lg)] p-6">
+            <div className="text-[15.5px] font-semibold">{roadmap.title}</div>
+            <div className="mt-1 text-[12.5px]" style={{ color: "var(--text-secondary)" }}>
+              Current phase ·{" "}
+              <span style={{ color: "var(--text-primary)", fontWeight: 600 }}>
+                {roadmap.phases.find((p) => p.status === "in_progress")?.title || "Getting started"}
               </span>
             </div>
+            <div className="mt-3 h-2 w-full overflow-hidden rounded-full" style={{ background: "var(--surface-muted)" }}>
+              <div className="h-full rounded-full" style={{ width: `${roadmap.progress.pct}%`, background: "var(--accent-strong)" }} />
+            </div>
+            {roadmap.nextAction && (
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--accent-strong)" }}>Next</div>
+                  <div className="text-[13.5px] font-medium">{roadmap.nextAction.title}</div>
+                </div>
+                <Button variant="primary" size="sm" onClick={() => navigate("/roadmap")}>
+                  Continue Roadmap →
+                </Button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="nexa-card flex flex-col items-center gap-2 rounded-[var(--radius-lg)] p-8 text-center">
+            <p className="text-[13px]" style={{ color: "var(--text-secondary)" }}>
+              Tell NEXA what you're working toward and we'll build a personalized roadmap for you.
+            </p>
+            <Button variant="secondary" size="sm" onClick={() => navigate("/roadmap")}>Build my roadmap</Button>
           </div>
         )}
       </DashboardSection>

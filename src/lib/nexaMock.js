@@ -147,11 +147,24 @@ function respondApplicationSupport(message) {
   return { content: "Tell me a bit more about what you're working on — an essay, an email, or something else — and I'll help you structure it. I can help you tighten your own writing, not generate a finished document for you." };
 }
 
+function respondPersonalizedRoadmap(ctx) {
+  const pr = ctx.personalizedRoadmap;
+  if (!pr || pr.progress.total === 0) {
+    return { content: "You don't have a roadmap yet — tell NEXA your goal on your profile and I'll build one.", actions: [{ type: "OPEN_PROFILE", label: "Set your goal" }] };
+  }
+  let content = `Your **${pr.title}** roadmap is ${pr.progress.pct}% complete (${pr.progress.completed} of ${pr.progress.total} steps).`;
+  if (pr.currentPhase) content += `\n\nYou're currently in the **${pr.currentPhase}** phase.`;
+  if (pr.nextStep) content += `\n\n**Your next step:** ${pr.nextStep.title}\n${pr.nextStep.description}`;
+  else content += `\n\nEverything on your roadmap is complete — nice work.`;
+  return { content, actions: [{ type: "VIEW_ROADMAP", label: "Open roadmap" }] };
+}
+
 const RULES = [
   { test: (m) => /who should i (talk|ask|reach)|who can help|should i ask/.test(m), run: (ctx) => respondNetwork(ctx) },
   { test: (m) => /compare.*saved|saved.*compare/.test(m), run: (ctx) => respondCompareSaved(ctx) },
   { test: (m) => /eligib|qualify|qualified/.test(m), run: (ctx) => respondEligibility(ctx) },
   { test: (m) => /which (opportunity|one)|best (opportunity|match)|prioriti[sz]e|fully funded|closes first|closes soonest/.test(m), run: (ctx, m) => respondPrioritizeOpportunity(ctx, m) },
+  { test: (m) => /why is this my next step|complete .*faster|what should i learn next|find opportunities related|about my roadmap|my roadmap progress/.test(m), run: (ctx) => respondPersonalizedRoadmap(ctx) },
   { test: (m) => /30.day|30 day|this week|falling behind|what.*next|next step|smartest/.test(m), run: (ctx, m) => (/30.day|30 day|this week|falling behind/.test(m) ? respondRoadmapStatus(ctx, m) : respondNextStep(ctx)) },
   { test: (m) => /roadmap|prioriti[sz]e|plan/.test(m), run: (ctx, m) => respondRoadmapStatus(ctx, m) },
   { test: (m) => /strength|missing|gap|weak|skills should i|what am i/.test(m), run: (ctx, m) => respondProfile(ctx, m) },
@@ -169,13 +182,6 @@ export function generateMockResponse(message, context, isFirstMessage) {
     if (context.entryContext?.type === "profile") {
       const res = respondNextStep(context);
       return { content: res.content, actions: res.actions };
-    }
-    if (context.entryContext?.type === "roadmap") {
-      if (!context.roadmapPlan) {
-        return { content: "You haven't built a roadmap yet — head to the Roadmap page and tell NEXA what you're working toward.", actions: [{ type: "VIEW_ROADMAP", label: "Build my roadmap" }] };
-      }
-      const res = respondNextStep(context);
-      return { content: `You're ${context.roadmapPlan.progressPct}% through **${context.roadmapPlan.goal}**.\n\n${res.content}`, actions: res.actions };
     }
     const actions = [];
     if (context.currentOpportunity) actions.push({ type: "OPEN_OPPORTUNITY", label: "View opportunity", payload: { id: context.currentOpportunity.id } });

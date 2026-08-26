@@ -1,10 +1,11 @@
 import { createContext, useContext, useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { useAuth } from "./AuthContext.jsx";
 import { useProfile } from "./ProfileContext.jsx";
+import { useCatalog } from "./CatalogContext.jsx";
 import { fetchRoadmap, saveRoadmap } from "../lib/dataService.js";
 import {
-  generateRoadmapPlan, regenerateRoadmapPlan, toggleStepStatus,
-  computeProgress, getNextStep, isStale,
+  generateRoadmap, attachRuntimeData, mergeCompletion,
+  profileSignature, signaturesDiffer,
 } from "../lib/roadmapEngine.js";
 
 const STORAGE_KEY = "nexa_roadmap_v1";
@@ -14,95 +15,131 @@ function loadStoredRoadmap() {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
+  } catch { return null; }
+}
+
+// Whether the profile has enough signal to generate anything meaningful
+// (empty state per section 19 otherwise).
+function canGenerateFrom(profile) {
+  return Boolean(profile.careerStage || profile.goals?.length || profile.interests?.length);
 }
 
 export function RoadmapProvider({ children }) {
   const { user, configured } = useAuth();
   const { profile, profileLoaded } = useProfile();
-  const [roadmap, setRoadmap] = useState(configured ? null : loadStoredRoadmap);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [saving, setSaving] = useState(false);
-  const loadedForUser = useRef(null);
+  const { opportunities } = useCatalog();
 
-  // ---- Supabase-backed: load this user's roadmap row (or none yet) ----
+  // `roadmapRow` is the persisted shape: {goal, title, description, phases
+  // (with plain completed booleans), generatedFrom}. Runtime status +
+  // opportunity attachment is derived, never stored.
+  const [roadmapRow, setRoadmapRow] = useState(null);
+  const [loaded, setLoaded] = useState(!configured);
+  const [error, setError] = useState(null);
+  const [regenerating, setRegenerating] = useState(false);
+  const savingRef = useRef(false);
+
+  const persist = useCallback(async (row) => {
+    if (!configured) {
+      try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(row)); } catch { /* ignore */ }
+      return row;
+    }
+    if (!user) return row;
+    const saved = await saveRoadmap(user.id, row);
+    return saved || row;
+  }, [configured, user]);
+
+  // ---- initial load (+ first-time auto-generate) ----
   useEffect(() => {
-    if (!configured) { setLoading(false); return; }
-    if (!user) { setRoadmap(null); setLoading(false); loadedForUser.current = null; return; }
-    if (loadedForUser.current === user.id) return;
+    if (!profileLoaded) return;
     let alive = true;
-    setLoading(true);
-    setError(null);
     (async () => {
+      setError(null);
       try {
-        const r = await fetchRoadmap(user.id);
+        let row = configured && user ? await fetchRoadmap(user.id) : (configured ? null : loadStoredRoadmap());
+        if (!row && canGenerateFrom(profile)) {
+          const fresh = generateRoadmap(profile);
+          row = { ...fresh, generatedFrom: profileSignature(profile) };
+          row = await persist(row);
+        }
         if (!alive) return;
-        setRoadmap(r);
-        loadedForUser.current = user.id;
-      } catch {
-        if (!alive) return;
-        setError("We couldn't load your roadmap right now.");
+        setRoadmapRow(row);
+      } catch (err) {
+        console.error("load roadmap:", err.message);
+        if (alive) setError("We couldn't load your roadmap right now.");
       } finally {
-        if (alive) setLoading(false);
+        if (alive) setLoaded(true);
       }
     })();
     return () => { alive = false; };
-  }, [user, configured]);
-
-  // ---- Offline/demo mode: persist to localStorage ----
-  useEffect(() => {
-    if (configured) return;
-    try {
-      if (roadmap) window.localStorage.setItem(STORAGE_KEY, JSON.stringify(roadmap));
-      else window.localStorage.removeItem(STORAGE_KEY);
-    } catch { /* ignore */ }
-  }, [roadmap, configured]);
-
-  const persist = useCallback(async (next) => {
-    setRoadmap(next);
-    if (!configured || !user) return;
-    setSaving(true);
-    setError(null);
-    try {
-      const saved = await saveRoadmap(user.id, next);
-      setRoadmap(saved);
-    } catch {
-      setError("We couldn't update your roadmap right now.");
-    } finally {
-      setSaving(false);
-    }
-  }, [configured, user]);
-
-  const generate = useCallback(async () => {
-    const plan = generateRoadmapPlan(profile);
-    await persist(plan);
-  }, [profile, persist]);
+    // Regenerating on every profile keystroke would be noisy — this effect
+    // is intentionally load-only; explicit changes go through regenerate().
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, configured, profileLoaded]);
 
   const regenerate = useCallback(async () => {
-    const plan = regenerateRoadmapPlan(profile, roadmap?.phases || []);
-    await persist(plan);
-  }, [profile, roadmap, persist]);
+    if (!profileLoaded || regenerating) return;
+    setRegenerating(true);
+    setError(null);
+    try {
+      const fresh = generateRoadmap(profile);
+      const merged = mergeCompletion(fresh, roadmapRow?.phases || []);
+      const row = { ...merged, generatedFrom: profileSignature(profile) };
+      const saved = await persist(row);
+      setRoadmapRow(saved);
+    } catch (err) {
+      console.error("regenerate roadmap:", err.message);
+      setError("We couldn't update your roadmap right now.");
+    } finally {
+      setRegenerating(false);
+    }
+  }, [profile, profileLoaded, roadmapRow, persist, regenerating]);
 
-  const toggleStep = useCallback(async (phaseId, stepId) => {
-    if (!roadmap) return;
-    const phases = toggleStepStatus(roadmap.phases, phaseId, stepId);
-    await persist({ ...roadmap, phases });
-  }, [roadmap, persist]);
+  const setStepCompleted = useCallback(async (phaseId, stepId, completed) => {
+    if (!roadmapRow) return;
+    const nowIso = new Date().toISOString();
+    const nextRow = {
+      ...roadmapRow,
+      phases: roadmapRow.phases.map((p) => (
+        p.id !== phaseId ? p : {
+          ...p,
+          steps: p.steps.map((s) => (s.id !== stepId ? s : { ...s, completed, completedAt: completed ? nowIso : null })),
+        }
+      )),
+    };
+    setRoadmapRow(nextRow); // optimistic
+    if (savingRef.current) return; // a save is already in flight; the next effect tick will catch up
+    savingRef.current = true;
+    try {
+      const saved = await persist(nextRow);
+      if (saved) setRoadmapRow(saved);
+    } catch (err) {
+      console.error("save roadmap step:", err.message);
+      setError("We couldn't save that update — please try again.");
+    } finally {
+      savingRef.current = false;
+    }
+  }, [roadmapRow, persist]);
 
-  const stale = useMemo(
-    () => (roadmap ? isStale(profile, roadmap.sourceSnapshot) : false),
-    [profile, roadmap]
+  const runtime = useMemo(
+    () => (roadmapRow ? attachRuntimeData(roadmapRow, profile, opportunities) : null),
+    [roadmapRow, profile, opportunities]
   );
-  const progress = useMemo(() => computeProgress(roadmap?.phases || []), [roadmap]);
-  const nextStep = useMemo(() => getNextStep(roadmap?.phases || []), [roadmap]);
+
+  const needsUpdate = useMemo(
+    () => Boolean(roadmapRow && signaturesDiffer(roadmapRow.generatedFrom, profileSignature(profile))),
+    [roadmapRow, profile]
+  );
 
   const value = useMemo(() => ({
-    roadmap, loading: loading || !profileLoaded, saving, error, stale, progress, nextStep,
-    generate, regenerate, toggleStep,
-  }), [roadmap, loading, profileLoaded, saving, error, stale, progress, nextStep, generate, regenerate, toggleStep]);
+    roadmap: runtime,
+    loaded,
+    error,
+    regenerating,
+    needsUpdate,
+    canGenerate: canGenerateFrom(profile),
+    regenerate,
+    setStepCompleted,
+  }), [runtime, loaded, error, regenerating, needsUpdate, profile, regenerate, setStepCompleted]);
 
   return <RoadmapContext.Provider value={value}>{children}</RoadmapContext.Provider>;
 }

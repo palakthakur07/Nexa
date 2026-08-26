@@ -3,11 +3,11 @@ import { AnimatePresence } from "framer-motion";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import { CatalogProvider } from "./context/CatalogContext.jsx";
 import { ProfileProvider } from "./context/ProfileContext.jsx";
+import { RoadmapProvider } from "./context/RoadmapContext.jsx";
 import { NexaDrawerProvider } from "./context/NexaDrawerContext.jsx";
 import { SavedProvider } from "./context/SavedContext.jsx";
 import { ConnectionsProvider } from "./context/ConnectionsContext.jsx";
 import { ConversationsProvider } from "./context/ConversationsContext.jsx";
-import { RoadmapProvider } from "./context/RoadmapContext.jsx";
 import { OrganizationProvider } from "./context/OrganizationContext.jsx";
 import ProtectedRoute from "./components/auth/ProtectedRoute.jsx";
 import AdminRoute from "./components/auth/AdminRoute.jsx";
@@ -34,11 +34,15 @@ import BecomeMentor from "./pages/BecomeMentor.jsx";
 import Requests from "./pages/Requests.jsx";
 import Nexa from "./pages/Nexa.jsx";
 import Roadmap from "./pages/Roadmap.jsx";
+import PlaceholderRoute from "./pages/PlaceholderRoute.jsx";
 import AdminOpportunities from "./pages/AdminOpportunities.jsx";
 import AdminOrganizations from "./pages/AdminOrganizations.jsx";
 import AdminSources from "./pages/AdminSources.jsx";
 import OrgSignup from "./pages/OrgSignup.jsx";
 import OrgDashboard from "./pages/OrgDashboard.jsx";
+import About from "./pages/About.jsx";
+import Privacy from "./pages/Privacy.jsx";
+import Terms from "./pages/Terms.jsx";
 
 
 // Small helpers to keep the route table readable.
@@ -62,6 +66,9 @@ function AnimatedRoutes() {
         <Route path="/reset-password" element={<P><ResetPassword /></P>} />
         <Route path="/auth/update-password" element={<P><UpdatePassword /></P>} />
         <Route path="/auth/callback" element={<AuthCallback />} />
+        <Route path="/about" element={<P><About /></P>} />
+        <Route path="/privacy" element={<P><Privacy /></P>} />
+        <Route path="/terms" element={<P><Terms /></P>} />
 
         {/* Onboarding is reachable right after signup */}
         <Route path="/onboarding" element={<Guard><Onboarding /></Guard>} />
@@ -102,11 +109,11 @@ export default function App() {
     <AuthProvider>
       <CatalogProvider>
         <ProfileProvider>
-          <OrganizationProvider>
-            <SavedProvider>
-              <ConnectionsProvider>
-                <ConversationsProvider>
-                  <RoadmapProvider>
+          <RoadmapProvider>
+            <OrganizationProvider>
+              <SavedProvider>
+                <ConnectionsProvider>
+                  <ConversationsProvider>
                     <NexaDrawerProvider>
                       <div id="nexa-app" style={{ minHeight: "100%" }}>
                         <DemoModeBanner />
@@ -115,14 +122,13 @@ export default function App() {
                         <NexaDrawer />
                       </div>
                     </NexaDrawerProvider>
-                  </RoadmapProvider>
-                </ConversationsProvider>
-              </ConnectionsProvider>
-            </SavedProvider>
-          </OrganizationProvider>
+                  </ConversationsProvider>
+                </ConnectionsProvider>
+              </SavedProvider>
+            </OrganizationProvider>
+          </RoadmapProvider>
         </ProfileProvider>
       </CatalogProvider>
     </AuthProvider>
   );
 }
-
