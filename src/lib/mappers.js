@@ -3,9 +3,16 @@
 // component had to change its property names when data moved to the backend.
 
 export function rowToCommunity(r) {
-  return { id: r.id, name: r.name, category: r.category, why: r.why };
+  return {
+    id: r.id,
+    name: r.name,
+    category: r.category,
+    why: r.why,
+    url: r.url,
+    interests: r.interests || [],
+    priorities: r.priorities || [],
+  };
 }
-
 export function rowToOpportunity(r) {
   return {
     id: r.id,

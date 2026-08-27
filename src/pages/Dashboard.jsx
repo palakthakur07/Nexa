@@ -9,6 +9,7 @@ import { Reveal } from "../lib/hooks.jsx";
 import { useProfile } from "../context/ProfileContext.jsx";
 import { useCatalog } from "../context/CatalogContext.jsx";
 import { calculateMatchScore } from "../lib/matching.js";
+import { rankCommunities } from "../lib/communityMatching.js";
 import { calculateMentorMatchScore } from "../lib/mentorMatching.js";
 import { fetchRatingsSummary } from "../lib/dataService.js";
 import { getNextMove } from "../lib/scoring.js";
@@ -24,6 +25,11 @@ export default function Dashboard() {
   useEffect(() => {
     fetchRatingsSummary().then(setRatings);
   }, []);
+
+  const rankedCommunities = useMemo(
+    () => rankCommunities(profile, communities, 3),
+    [profile, communities]
+  );
 
   const topOpportunities = useMemo(
     () =>
@@ -231,23 +237,28 @@ export default function Dashboard() {
             Communities
           </div>
           <div className="nexa-card mt-3 space-y-2.5 rounded-[var(--radius-lg)] p-5">
-            {communities.slice(0, 3).map((c) => (
-              <div key={c.id} className="flex items-center justify-between">
-                <div>
-                  <div className="text-[13px] font-semibold">{c.name}</div>
-                  <div
-                    className="text-[11.5px]"
-                    style={{ color: "var(--text-secondary)" }}
-                  >
-                    {c.category}
+            {rankedCommunities.map((c) => {
+              const Row = c.url ? "a" : "div";
+              const rowProps = c.url ? { href: c.url, target: "_blank", rel: "noopener noreferrer" } : {};
+              return (
+                <Row key={c.id} className="flex items-center justify-between group" style={c.url ? { cursor: "pointer" } : undefined} {...rowProps}>
+                  <div>
+                    <div className="text-[13px] font-semibold">{c.name}</div>
+                    <div
+                      className="text-[11.5px]"
+                      style={{ color: "var(--text-secondary)" }}
+                    >
+                      {c.category}
+                    </div>
                   </div>
-                </div>
-                <ArrowUpRight
-                  size={14}
-                  style={{ color: "var(--text-tertiary)" }}
-                />
-              </div>
-            ))}
+                  <ArrowUpRight
+                    size={14}
+                    className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                    style={{ color: "var(--text-tertiary)" }}
+                  />
+                </Row>
+              );
+            })}
           </div>
         </Reveal>
       </div>
