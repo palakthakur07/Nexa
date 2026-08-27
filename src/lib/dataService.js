@@ -415,10 +415,10 @@ export async function submitRating(connectionRequestId, mentorId, ratedBy, ratin
 export async function fetchProfileNamesByIds(userIds) {
   if (!isSupabaseConfigured() || !userIds || userIds.length === 0) return {};
   const unique = [...new Set(userIds)];
-  const { data, error } = await supabase.from("profiles").select("id, name").in("id", unique);
+  const { data, error } = await supabase.from("profiles").select("id, name, photo_url").in("id", unique);
   if (error) { console.error("fetchProfileNamesByIds:", error.message); return {}; }
   const map = {};
-  for (const row of data) map[row.id] = row.name || "NEXA member";
+  for (const row of data) map[row.id] = { name: row.name || "NEXA member", photoUrl: row.photo_url || "" };
   return map;
 }
 

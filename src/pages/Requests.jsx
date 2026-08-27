@@ -169,10 +169,10 @@ export default function Requests() {
             {received.map((req) => (
               <div key={req.id} className="nexa-card rounded-[var(--radius-lg)] p-5">
                 <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-start gap-3">
-                    <Avatar initials={initialsFor(requesterNames[req.user_id])} size={36} />
+                                    <div className="flex items-start gap-3">
+                    <Avatar initials={initialsFor(requesterNames[req.user_id]?.name)} size={36} photoUrl={requesterNames[req.user_id]?.photoUrl} />
                     <div>
-                      <div className="text-[14.5px] font-semibold">{requesterNames[req.user_id] || "NEXA member"}</div>
+                      <div className="text-[14.5px] font-semibold">{requesterNames[req.user_id]?.name || "NEXA member"}</div>
                       {req.topic && <div className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{req.topic}</div>}
                     </div>
                   </div>

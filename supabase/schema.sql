@@ -42,6 +42,10 @@ alter table public.profiles enable row level security;
 -- Safe to re-run on a database that already had this table (e.g. from an
 -- earlier version of this schema) — adds the column only if missing.
 alter table public.profiles add column if not exists is_admin boolean default false;
+-- The account-level profile photo (kept in sync with mentors.photo_url by
+-- syncProfilePhoto/syncMentorPhoto in dataService.js). See
+-- migrations/008_profile_photo.sql for the history of this column.
+alter table public.profiles add column if not exists photo_url text;
 
 drop policy if exists "profiles_select_own" on public.profiles;
 drop policy if exists "profiles_insert_own" on public.profiles;

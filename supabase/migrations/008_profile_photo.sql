@@ -1,0 +1,14 @@
+-- Adds the missing photo_url column to profiles.
+--
+-- The app (Profile.jsx -> ProfileContext.jsx -> mappers.js profileToRow/
+-- rowToProfile, and dataService.js syncProfilePhoto) has always read/written
+-- a `profiles.photo_url` column, but schema.sql never actually created one
+-- (only `mentors.photo_url`, added in 003_mentor_network.sql, exists).
+--
+-- Effect of the missing column: every `supabase.from("profiles").update(...)`
+-- call that included photo_url failed outright (Postgrest "column not found"),
+-- so the *entire* profile save silently failed -- swallowed by a
+-- console.error with no UI feedback. The photo looked like it saved (local
+-- state updated immediately) but nothing reached the database, so it
+-- disappeared on next login when the profile was reloaded from the row.
+alter table public.profiles add column if not exists photo_url text;
