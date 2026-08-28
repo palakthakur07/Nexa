@@ -173,6 +173,7 @@ export default function Requests() {
                     <Avatar initials={initialsFor(requesterNames[req.user_id]?.name)} size={36} photoUrl={requesterNames[req.user_id]?.photoUrl} />
                     <div>
                       <div className="text-[14.5px] font-semibold">{requesterNames[req.user_id]?.name || "NEXA member"}</div>
+                      
                       {req.topic && <div className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{req.topic}</div>}
                     </div>
                   </div>
