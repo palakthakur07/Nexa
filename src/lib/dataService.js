@@ -272,7 +272,8 @@ export async function deleteMentorProfile(mentorId) {
 // quietly if the user has no row in the other table yet.
 export async function syncProfilePhoto(userId, photoUrl) {
   if (!isSupabaseConfigured() || !userId) return;
-  const { error } = await supabase.from("profiles").update({ photo_url: photoUrl || null }).eq("id", userId);
+  // upsert, not update — see the note in ProfileContext.jsx's save effect.
+  const { error } = await supabase.from("profiles").upsert({ id: userId, photo_url: photoUrl || null });
   if (error) console.error("syncProfilePhoto (profiles):", error.message);
 }
 

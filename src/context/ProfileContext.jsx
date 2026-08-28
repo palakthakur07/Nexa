@@ -88,7 +88,13 @@ export function ProfileProvider({ children }) {
     if (skipNextSave.current) { skipNextSave.current = false; return; }
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(async () => {
-      const { error } = await supabase.from("profiles").update(profileToRow(profile)).eq("id", user.id);
+      // upsert, not update: if this account's profiles row is missing (e.g.
+      // it predates the on-signup trigger, or that trigger failed), update()
+      // would silently match zero rows and do nothing. upsert guarantees the
+      // row exists after every save.
+      const { error } = await supabase
+        .from("profiles")
+        .upsert({ id: user.id, email: user.email || profile.email || "", ...profileToRow(profile) });
       if (error) console.error("save profile:", error.message);
     }, 500);
     return () => saveTimer.current && clearTimeout(saveTimer.current);
